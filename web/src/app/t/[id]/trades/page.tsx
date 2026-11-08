@@ -94,6 +94,8 @@ export default async function TradesPage({ params }: { params: Promise<{ id: str
                     <span className="flex h-10 items-center rounded-full bg-up-tint px-[18px] text-sm font-semibold text-up-ink">Copied</span>
                   ) : t.allowCopy && !isStable(tr.to) ? (
                     <CopyButton mode={ctx.mode} trader={{ id: t.id, name: t.name }} trade={tr} />
+                  ) : isStable(tr.to) ? (
+                    <span className="flex h-10 min-w-[76px] items-center justify-center rounded-full bg-subtle px-4 text-sm font-medium text-muted" title="A sale into dollars: nothing to copy">Sold</span>
                   ) : null}
                 </div>
               );

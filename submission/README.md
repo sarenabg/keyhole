@@ -10,9 +10,13 @@ Everything for the NEAR HACKATHON submission. Nothing here has been posted or su
 | `media/keyhole-promo-16x9.mp4` | 45 s promo (X, YouTube) |
 | `media/keyhole-promo-1x1.mp4` | 45 s promo, square (feeds) |
 | `media/keyhole-walkthrough.mp4` | 2-minute demo walkthrough |
+
+The videos here are the first versions (music and captions, no narration). Narrated versions were started and paused at your request; see `../video/STATUS.md`.
 | `screenshots/` | Real screens: traders, private trader page, buying a key, private trades, copying, earnings, onboarding, Live-mode wallet sign-in and payment address, phone views |
 
 The videos are made from code in `../video/` (real screenshots of the app, synthesized music); `node video/capture.mjs` re-captures the screens.
+
+Rules check: `../docs/REQUIREMENTS_CHECK.md`.
 
 ## Before submitting (your steps)
 

@@ -85,6 +85,8 @@ It runs three scripts. Expected endings:
 
 Type checks and lint: `npm run typecheck` and `npm run lint`.
 
+The same checks (types, lint, record maths, production build, demo end to end, contract tests) run on every push: [.github/workflows/checks.yml](.github/workflows/checks.yml).
+
 ### Contract tests
 
 ```bash
@@ -155,6 +157,8 @@ web/                  Next.js 15 app (Tailwind v4)
 contracts/keys/       keys contract (Rust, near-sdk 5.27), 46 tests
 docs/RESEARCH.md      what's real in NEAR Intents today, and the hackathon rules
 docs/LIVE_TEST.md     step-by-step real-money test on mainnet
+docs/DEPLOY.md        hosting on Vercel, switching on Live mode online
+docs/REQUIREMENTS_CHECK.md  hackathon rules vs. this repo
 submission/           pitch, form answers, X post draft, screenshots, videos
 video/                the videos, rendered from code over real screenshots
 ```
@@ -163,6 +167,7 @@ video/                the videos, rendered from code over real screenshots
 
 - **Built during the hackathon.** This repository was started on 8 Nov 2026; there is no pre-hackathon code. Tags: `hackathon-submission` marks the submitted version.
 - **Libraries:** Next.js, React, Tailwind CSS, `@libsql/client`, `qrcode`, `server-only`; near-sdk (Rust). No wallet SDKs: wallet sign-in uses the wallets' own browser APIs (MetaMask-style `personal_sign`, Phantom `signMessage`, MyNearWallet's sign-message page).
+- **Other project by the same team (rule Q-015):** **Harbor**, any-coin checkout on NEAR Intents (separate repository; link added when it's published). Keyhole and Harbor are independent products.
 - **Reused from our own project:** coin and chain logos and the coin-grouping helper (`web/public/icons`, `web/src/lib/coins.ts`, `logos.ts`) come from our other entry, **Harbor** (any-coin checkout on NEAR Intents).
 - **AI-generated code:** most of the code, tests and docs were written with Claude Code (Anthropic) and reviewed by the team.
 - **Other chains:** none deployed; NEAR Intents lets people pay from other chains.
