@@ -7,7 +7,7 @@ Keyhole is copy trading for traders who keep their trades private on NEAR. A tra
 Built at the NEAR HACKATHON (November 2026). Tracks: **Privacy & Private AI** (`privacy`) and **Unstoppable DeFi** (`defi`).
 
 - Hosted app: **https://keyhole-near.vercel.app** (Demo mode needs nothing; switch to Live in the header)
-- Demo video: _[added after recording]_
+- Videos: [45 s promo](submission/media/keyhole-promo-16x9.mp4) · [2-minute walkthrough](submission/media/keyhole-walkthrough.mp4)
 
 ## The problem
 
@@ -154,6 +154,9 @@ web/                  Next.js 15 app (Tailwind v4)
   scripts/              automated checks
 contracts/keys/       keys contract (Rust, near-sdk 5.27), 46 tests
 docs/RESEARCH.md      what's real in NEAR Intents today, and the hackathon rules
+docs/LIVE_TEST.md     step-by-step real-money test on mainnet
+submission/           pitch, form answers, X post draft, screenshots, videos
+video/                the videos, rendered from code over real screenshots
 ```
 
 ## Hackathon disclosures
