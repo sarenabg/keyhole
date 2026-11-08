@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // This app lives in web/; pin the root so Next.js does not guess a parent folder.
   outputFileTracingRoot: path.join(__dirname),
+  devIndicators: false,
 };
 
 export default nextConfig;

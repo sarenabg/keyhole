@@ -107,7 +107,7 @@ export default async function TraderPage({ params, searchParams }: { params: Pro
                   <BuyKeyButton
                     mode={ctx.mode}
                     signedIn={Boolean(ctx.viewer)}
-                    trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut }}
+                    trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut, isNew: !r.enoughData }}
                     className="flex h-[46px] items-center rounded-full bg-accent px-6 text-[15px] font-semibold text-white"
                   >
                     Get a key
@@ -143,7 +143,7 @@ export default async function TraderPage({ params, searchParams }: { params: Pro
               <BuyKeyButton
                 mode={ctx.mode}
                 signedIn={Boolean(ctx.viewer)}
-                trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut }}
+                trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut, isNew: !r.enoughData }}
                 className="flex h-[50px] w-full items-center justify-center rounded-[14px] bg-white font-semibold text-ink"
               >
                 Get a key
@@ -183,7 +183,7 @@ export default async function TraderPage({ params, searchParams }: { params: Pro
           <BuyKeyButton
             mode={ctx.mode}
             signedIn={Boolean(ctx.viewer)}
-            trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut }}
+            trader={{ id: t.id, name: t.name, avatar: t.avatar, ret: r.ret, period, prices: t.prices, cut, isNew: !r.enoughData }}
             className="flex h-[52px] items-center gap-2 rounded-[14px] bg-accent px-6 text-base font-semibold text-white"
           >
             <KeyIcon size={18} /> Get a key

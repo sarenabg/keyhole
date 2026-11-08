@@ -9,7 +9,7 @@ import { WalletDialog } from "./WalletDialog";
 import { dateShort, pct } from "@/lib/format";
 import type { Mode, Period } from "@/lib/types";
 
-type TraderInfo = { id: string; name: string; avatar: number; ret: number; period: Period; prices: { 7: number; 30: number; 90: number }; cut: number };
+type TraderInfo = { id: string; name: string; avatar: number; ret: number; period: Period; prices: { 7: number; 30: number; 90: number }; cut: number; isNew?: boolean };
 const PLANS = [7, 30, 90] as const;
 
 export function BuyKeyButton({ mode, signedIn, trader, className, children }: { mode: Mode; signedIn: boolean; trader: TraderInfo; className?: string; children: ReactNode }) {
@@ -95,7 +95,11 @@ function BuyKeyDialog({ mode, trader, onClose }: { mode: Mode; trader: TraderInf
             <Avatar id={trader.id} name={trader.name} idx={trader.avatar} />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-lg font-semibold">Key to {first}&apos;s trades</span>
-              <span className={cx("text-[13px] font-semibold", trader.ret >= 0 ? "text-up" : "text-down")}>{pct(trader.ret)} in {trader.period} days</span>
+              {trader.isNew ? (
+                <span className="text-[13px] font-semibold text-muted">New trader · record starting</span>
+              ) : (
+                <span className={cx("text-[13px] font-semibold", trader.ret >= 0 ? "text-up" : "text-down")}>{pct(trader.ret)} in {trader.period} days</span>
+              )}
             </div>
           </ModalHead>
 

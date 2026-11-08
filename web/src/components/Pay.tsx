@@ -116,7 +116,12 @@ export function SendBox({ ins, chainName, state }: { ins: Instructions; chainNam
     return () => clearInterval(t);
   }, []);
   const left = ins.deadline ? Math.max(0, Date.parse(ins.deadline) - now) : null;
-  const mm = left !== null ? `${Math.floor(left / 60000)}:${String(Math.floor((left % 60000) / 1000)).padStart(2, "0")}` : null;
+  // Short windows count down; long ones (NEAR Intents often allows days) just say how long.
+  const mm =
+    left === null ? null
+    : left < 3_600_000 ? `${Math.floor(left / 60000)}:${String(Math.floor((left % 60000) / 1000)).padStart(2, "0")} left`
+    : left < 48 * 3_600_000 ? `valid for ${Math.floor(left / 3_600_000)} h`
+    : `valid for ${Math.floor(left / 86_400_000)} days`;
   const copy = (v: string, k: string) => { navigator.clipboard?.writeText(v); setCopied(k); setTimeout(() => setCopied(null), 1500); };
 
   return (
@@ -130,7 +135,7 @@ export function SendBox({ ins, chainName, state }: { ins: Instructions; chainNam
             {ins.amountIn} {ins.symbol}
             {copied === "amt" ? <CheckIcon size={16} className="text-up" /> : <CopyIcon size={16} className="text-muted" />}
           </button>
-          <span className="text-[13px] text-muted">on {chainName}{mm && state === "waiting" ? ` · ${mm} left` : ""}</span>
+          <span className="text-[13px] text-muted">on {chainName}{mm && state === "waiting" ? ` · ${mm}` : ""}</span>
         </div>
       </div>
       <div className="flex flex-col gap-1.5">

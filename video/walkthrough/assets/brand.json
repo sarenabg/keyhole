@@ -1,0 +1,130 @@
+{
+ "url": "https://keyhole-near.vercel.app",
+ "title": "Keyhole · Trade in private. Sell the view.",
+ "description": "Follow traders whose records come straight from their private NEAR Intents accounts. Buy a key to see their trades and copy them.",
+ "themeColor": [],
+ "text_colors": [
+  [
+   "#5b6474",
+   47
+  ],
+  [
+   "#0d1117",
+   31
+  ],
+  [
+   "#4a2fe0",
+   10
+  ],
+  [
+   "#3d4555",
+   7
+  ],
+  [
+   "#047857",
+   6
+  ],
+  [
+   "#1e4fd8",
+   2
+  ],
+  [
+   "#7a4a00",
+   1
+  ],
+  [
+   "#ffffff",
+   1
+  ],
+  [
+   "#b4400b",
+   1
+  ],
+  [
+   "#b42318",
+   1
+  ]
+ ],
+ "background_colors": [
+  [
+   "#ffffff",
+   96
+  ],
+  [
+   "#efebff",
+   3
+  ],
+  [
+   "#f0f1f4",
+   2
+  ],
+  [
+   "#fff4e0",
+   0
+  ],
+  [
+   "#0d1117",
+   0
+  ],
+  [
+   "#ddebff",
+   0
+  ],
+  [
+   "#fff1ea",
+   0
+  ],
+  [
+   "#e7f6f0",
+   0
+  ],
+  [
+   "#fdecec",
+   0
+  ],
+  [
+   "#5b3df5",
+   0
+  ]
+ ],
+ "font_families": [
+  [
+   "Inter",
+   100
+  ],
+  [
+   "Space Grotesk",
+   8
+  ]
+ ],
+ "font_weights": [
+  [
+   "Inter 600",
+   43
+  ],
+  [
+   "Inter 400",
+   41
+  ],
+  [
+   "Inter 700",
+   10
+  ],
+  [
+   "Space Grotesk 600",
+   8
+  ],
+  [
+   "Inter 500",
+   6
+  ]
+ ],
+ "css_vars": {},
+ "wordmark": {
+  "text": "Keyhole",
+  "font": "Inter, \"Inter Fallback\", ui-sans-serif, system-ui, sans-serif",
+  "weight": "400",
+  "tracking": "normal",
+  "html": "<span class=\"flex items-center gap-2.5\"><span class=\"flex h-8 w-8 items-center justify-center rounded-[9px] bg-accent\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"#FFFFFF\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8.5\" r=\"5\"></circle><path d=\"M9.6 12 L8 21 H16 L14.4 12 Z\"></path></svg></span><span class=\"font-display text-[19px] font-semibold tracking-[-0.02em]\">Keyhole</span></span>"
+ }
+}

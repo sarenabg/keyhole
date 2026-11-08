@@ -1,0 +1,9 @@
+{
+  "name": "keyhole-video",
+  "private": true,
+  "type": "module",
+  "description": "Promo reel and demo walkthrough for Keyhole, rendered from code (motion-reel).",
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
+}

@@ -13,3 +13,10 @@ video/node_modules/
 video/out/frames/
 web/.next-build/
 web/.env.local
+video/node_modules/
+video/out/
+video/shots/
+video/preview/
+video/*/assets/shots/
+video/*/audio/*.wav
+video/*/audio/stems/
