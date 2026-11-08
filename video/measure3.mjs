@@ -1,0 +1,24 @@
+import { chromium } from "playwright";
+const BASE = "https://keyhole-near.vercel.app";
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+await ctx.addCookies([{ name: "kh_mode", value: "demo", url: BASE }]);
+const p = await ctx.newPage();
+const abs = async (loc) => { const r = await loc.boundingBox(); const sy = await p.evaluate(() => scrollY); return r && [r.x*2, (r.y+sy)*2, r.width*2, r.height*2].map(Math.round); };
+await p.goto(`${BASE}/?p=90`); await p.waitForLoadState("networkidle");
+const cards = p.locator('section[aria-label="Traders"] > a');
+for (let i = 0; i < await cards.count(); i++) console.log("card", i, await cards.nth(i).getAttribute("href"), (await abs(cards.nth(i))).join(","));
+await p.goto(`${BASE}/t/maralin.near?p=90`); await p.waitForLoadState("networkidle");
+await p.locator("aside").getByRole("button", { name: "Get a key" }).click(); await p.waitForTimeout(600);
+await p.getByRole("button", { name: /Pay 25/ }).click(); await p.getByText("You're in.").waitFor();
+await p.goto(`${BASE}/t/maralin.near/trades`); await p.waitForLoadState("networkidle");
+const feed = p.locator('section:has(> div > span:text("Live"))').first();
+const fb = await abs(feed); console.log("feed", fb.join(","));
+const rows = feed.locator(":scope > div.flex-wrap");
+const n = await rows.count(); const ys = [];
+for (let i = 0; i < Math.min(n, 14); i++) { const r = await abs(rows.nth(i)); ys.push(r[1] - fb[1]); }
+console.log("feedRowsRelY", ys.join(","), "rowH", (await abs(rows.nth(0)))[3]);
+await p.goto(`${BASE}/sell`); await p.waitForLoadState("networkidle");
+const earned = p.locator("main > section").nth(1).locator("> div").first();
+console.log("earnedNum", (await abs(earned.locator("span.font-display"))).join(","));
+await b.close();
