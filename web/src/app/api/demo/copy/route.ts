@@ -14,6 +14,9 @@ export async function POST(req: Request) {
   const view = await demoPrivate(trader, 400);
   const trade = view?.trades.find((t) => t.id === tradeId);
   if (!trade) return fail("Trade not found.", 404);
+  // A repeat of the same copy within a few seconds (double click, retry) returns the first one.
+  const recent = s.copies.find((c) => c.tradeId === trade.id && c.trader === trader && Date.now() - c.at < 10_000);
+  if (recent) return ok(recent);
   const q = await copyQuote(trade, usd);
   const copy = {
     id: `c_${randomBytes(5).toString("hex")}`,

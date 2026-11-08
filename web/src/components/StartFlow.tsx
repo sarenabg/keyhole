@@ -6,6 +6,8 @@ import { WalletDialog } from "./WalletDialog";
 import { SellerSettings } from "./Seller";
 import { CheckIcon, CoinIcon, LockIcon, cx } from "./ui";
 import type { Mode } from "@/lib/types";
+import { shortId } from "@/lib/format";
+import { useSingleFlight } from "./useSingleFlight";
 
 export function StartFlow({ mode, signedInAs, cut }: { mode: Mode; signedInAs: string | null; cut: number }) {
   const router = useRouter();
@@ -21,7 +23,9 @@ export function StartFlow({ mode, signedInAs, cut }: { mode: Mode; signedInAs: s
     <span className={cx("flex h-9 w-9 flex-none items-center justify-center rounded-full font-bold", on ? "bg-accent text-white" : "bg-subtle text-muted")}>{n}</span>
   );
 
-  async function demoSign() {
+  const once = useSingleFlight();
+  const demoSign = (...args: Parameters<typeof demoSignNow>) => once(() => demoSignNow(...args));
+  async function demoSignNow() {
     setBusy(true);
     await new Promise((r) => setTimeout(r, 900));
     setBusy(false);
@@ -33,9 +37,9 @@ export function StartFlow({ mode, signedInAs, cut }: { mode: Mode; signedInAs: s
       <li className={cx("flex flex-col gap-4 rounded-[18px] bg-surface p-5", step === 1 ? "border-2 border-accent shadow-[0_8px_24px_rgba(91,61,245,0.12)]" : "border border-line")}>
         <div className="flex items-center gap-4">
           {step > 1 ? <Done /> : <Num n={1} on />}
-          <div className="flex flex-1 flex-col gap-0.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="font-semibold">Connect your wallet</span>
-            <span className="text-sm text-muted">{step > 1 ? who ?? "Demo wallet" : "The one you trade with on NEAR."}</span>
+            <span className="truncate text-sm text-muted">{step > 1 ? (who ? shortId(who) : "Demo wallet") : "The one you trade with on NEAR."}</span>
           </div>
         </div>
         {step === 1 && (
@@ -84,7 +88,7 @@ export function StartFlow({ mode, signedInAs, cut }: { mode: Mode; signedInAs: s
             mode={mode}
             cut={cut}
             cta="Start selling"
-            initial={{ name: mode === "demo" ? "You" : who ?? "", prices: [5, 15, 36], maxKeys: 300, allowCopy: true, listed: true }}
+            initial={{ name: mode === "demo" ? "You" : who ? shortId(who) : "", prices: [5, 15, 36], maxKeys: 300, allowCopy: true, listed: true }}
             onSaved={() => router.push(mode === "demo" ? "/sell" : "/sell")}
           />
         )}

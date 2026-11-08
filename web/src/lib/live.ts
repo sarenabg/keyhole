@@ -297,6 +297,17 @@ export async function startPurchase(trader: string, holder: string, days: 7 | 30
   if (!row || !row.listed) throw new Error("This trader isn't selling keys.");
   if (trader === holder) throw new Error("You can't buy your own key.");
   const price = days === 7 ? row.price7 : days === 30 ? row.price30 : row.price90;
+  const d0 = await ensureDb();
+  // The same request again within a minute (double click, retry) gets the same payment address.
+  const again = await d0.execute({
+    sql: "SELECT * FROM purchases WHERE trader_id = ? AND holder_id = ? AND days = ? AND origin_asset = ? AND status = 'waiting' AND created_at > ? ORDER BY created_at DESC LIMIT 1",
+    args: [trader, holder, days, originAsset, Date.now() - 60_000],
+  });
+  const prev = again.rows[0];
+  if (prev) {
+    const pt = await originToken(String(prev.origin_asset));
+    return { id: String(prev.id), depositAddress: String(prev.deposit_address), depositMemo: prev.deposit_memo ? String(prev.deposit_memo) : undefined, amountIn: String(prev.amount_in), symbol: symbolOf(pt), chain: pt.blockchain, deadline: prev.deadline ? String(prev.deadline) : undefined };
+  }
   const contract = keysContract();
   const t = await originToken(originAsset);
   const q = await getQuote({
@@ -396,6 +407,15 @@ export async function sellerStats(trader: string) {
 export async function startCopy(holder: string, trader: string, trade: TradeView, usd: number, originAsset: string): Promise<PayInstructions & { amountOut: string }> {
   if (!(usd >= 1 && usd <= 50_000)) throw new Error("Pick an amount between $1 and $50,000.");
   const origin = await originToken(originAsset);
+  const d0 = await ensureDb();
+  const again = await d0.execute({
+    sql: "SELECT * FROM copies WHERE holder_id = ? AND trade_id = ? AND origin_asset = ? AND usd_in = ? AND status = 'waiting' AND created_at > ? ORDER BY created_at DESC LIMIT 1",
+    args: [holder, trade.id, originAsset, usd, Date.now() - 60_000],
+  });
+  const prev = again.rows[0];
+  if (prev) {
+    return { id: String(prev.id), depositAddress: String(prev.deposit_address), depositMemo: prev.deposit_memo ? String(prev.deposit_memo) : undefined, amountIn: String(prev.amount_in), amountOut: String(prev.amount_out), symbol: symbolOf(origin), chain: origin.blockchain };
+  }
   const toAsset = trade.toAssetId ?? (await nearAssetFor(trade.to));
   if (!toAsset) throw new Error("That coin can't be copied right now.");
   const amountIn = Math.floor((usd / origin.price) * 10 ** origin.decimals);

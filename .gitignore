@@ -20,3 +20,4 @@ video/preview/
 video/*/assets/shots/
 video/*/audio/*.wav
 video/*/audio/stems/
+qa/node_modules/

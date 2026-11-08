@@ -1,0 +1,9 @@
+{
+  "name": "keyhole-qa",
+  "private": true,
+  "type": "module",
+  "description": "Browser QA sweep for Keyhole (Playwright).",
+  "devDependencies": {
+    "playwright": "^1.65.0"
+  }
+}

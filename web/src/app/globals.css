@@ -75,3 +75,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .kh-pop, .kh-fade, .kh-pulse, .kh-spin { animation: none; }
 }
+
+/* The body is a column so the footer sits at the bottom of short pages; pages keep their full width. */
+body > main {
+  width: 100%;
+}

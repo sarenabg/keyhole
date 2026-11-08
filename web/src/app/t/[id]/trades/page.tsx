@@ -14,8 +14,11 @@ export const dynamic = "force-dynamic";
 
 const BAR = ["#0D1117", "#5B3DF5", "#F7931A", "#2775CA", "#047857", "#C2410C"];
 
-export default async function TradesPage({ params }: { params: Promise<{ id: string }> }) {
+const FIRST_ROWS = 12;
+
+export default async function TradesPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id: raw } = await params;
+  const showAll = (await searchParams).all === "1";
   const id = decodeURIComponent(raw);
   const ctx = await context();
   const t = await trader(ctx, id, 90);
@@ -78,10 +81,10 @@ export default async function TradesPage({ params }: { params: Promise<{ id: str
             {view.trades.length === 0 && (
               <div className="px-6 py-16 text-center text-muted">No trades yet. New ones show up here within a few minutes.</div>
             )}
-            {view.trades.map((tr) => {
+            {(showAll ? view.trades : view.trades.slice(0, FIRST_ROWS)).map((tr) => {
               const isCopied = copied.has(tr.id) || (autoOn && tr.t >= autoSince);
               return (
-                <div key={tr.id} className="flex flex-wrap items-center gap-4 border-b border-line-soft px-6 py-4 last:border-0">
+                <div key={tr.id} data-trade-row="1" className="flex flex-wrap items-center gap-4 border-b border-line-soft px-6 py-4 last:border-0">
                   <PairIcon from={tr.from} to={tr.to} />
                   <div className="flex min-w-[180px] flex-1 flex-col gap-[3px]">
                     <span className="text-[15px] font-semibold">{tr.title}</span>
@@ -100,6 +103,11 @@ export default async function TradesPage({ params }: { params: Promise<{ id: str
                 </div>
               );
             })}
+            {!showAll && view.trades.length > FIRST_ROWS && (
+              <Link href={`/t/${encodeURIComponent(id)}/trades?all=1`} scroll={false} className="flex h-14 items-center justify-center text-sm font-semibold text-accent-ink no-underline hover:bg-canvas">
+                Show all {view.trades.length} trades
+              </Link>
+            )}
           </Card>
 
           <aside className="flex w-full flex-[1_1_320px] flex-col gap-4 sm:max-w-[380px]">

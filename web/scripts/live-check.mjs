@@ -89,7 +89,7 @@ if (mode.status === 409) {
 }
 check("live mode switches on", mode.status === 200);
 const home = await trader("/");
-check("live pages say real money", home.text.includes("Live on NEAR mainnet"));
+check("live pages say real money", home.text.includes("payments use real money"));
 
 // A trader proves their record with a NEAR wallet (NEP-413).
 const tw = wallet();
@@ -125,6 +125,8 @@ const usdcBase = coins.json.coins.find((c) => c.symbol === "USDC").places.find((
 const buy = await viewer("/api/live/keys", { json: { trader: tw.implicit, days: 7, asset: usdcBase.assetId } });
 check("real NEAR Intents payment address for a 2 USDC key", buy.status === 200 && buy.json.depositAddress && Number(buy.json.amountIn) >= 2, JSON.stringify(buy.json));
 console.log(`  (send ${buy.json.amountIn} ${buy.json.symbol} on ${buy.json.chain} → ${buy.json.depositAddress}; not sent)`);
+const buyAgain = await viewer("/api/live/keys", { json: { trader: tw.implicit, days: 7, asset: usdcBase.assetId } });
+check("asking again within a minute reuses the same payment address", buyAgain.json.depositAddress === buy.json.depositAddress && buyAgain.json.id === buy.json.id);
 const status = await viewer(`/api/live/keys/${buy.json.id}`);
 check("payment status is tracked (waiting)", status.status === 200 && status.json.state === "waiting", JSON.stringify(status.json));
 check("someone else can't read your payment", (await stranger(`/api/live/keys/${buy.json.id}`)).status === 401);

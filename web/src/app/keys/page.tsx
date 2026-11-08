@@ -21,7 +21,7 @@ export default async function KeysPage() {
   const now = Date.now();
   const keys = (await myKeys(ctx)).sort((a, b) => b.expiresAt - a.expiresAt);
   const copies = (await myCopies(ctx)).filter((c) => c.tradeId);
-  const cards = await Promise.all(keys.map(async (k) => ({ k, t: await trader(ctx, k.trader, 30) })));
+  const cards = await Promise.all(keys.map(async (k) => ({ k, t: await trader(ctx, k.trader, 90) })));
 
   return (
     <>
@@ -48,7 +48,12 @@ export default async function KeysPage() {
                       <span className="truncate font-semibold">{t?.name ?? k.trader}</span>
                       <span className={cx("text-[13px]", live ? "text-accent-ink" : "text-muted")}>{live ? `${left} ${left === 1 ? "day" : "days"} left` : `Ended ${dateShort(k.expiresAt)}`}</span>
                     </div>
-                    {t && <span className={cx("text-sm font-semibold", t.record.ret >= 0 ? "text-up" : "text-down")}>{pct(t.record.ret)}</span>}
+                    {t && (
+                      <span className="flex flex-col items-end">
+                        <span className={cx("text-sm font-semibold", t.record.ret >= 0 ? "text-up" : "text-down")}>{pct(t.record.ret)}</span>
+                        <span className="text-xs text-muted">90 days</span>
+                      </span>
+                    )}
                   </div>
                   <Link
                     href={live ? `/t/${encodeURIComponent(k.trader)}/trades` : `/t/${encodeURIComponent(k.trader)}`}

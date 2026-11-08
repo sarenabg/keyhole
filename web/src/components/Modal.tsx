@@ -10,10 +10,27 @@ export function Modal({ title, onClose, children, width = 460 }: { title: string
   // otherwise be trapped inside the header's box and appear cut off.
   const [host, setHost] = useState<HTMLElement | null>(null);
   useEffect(() => setHost(document.body), []);
+  // The latest onClose, without re-running the open/close effect on every render
+  // (re-running it would pull focus back to the dialog after every change inside it).
+  const onCloseRef = useRef(onClose);
   useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+  useEffect(() => {
+    if (!host) return;
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return onCloseRef.current();
+      // Keep Tab inside the dialog while it is open.
+      if (e.key !== "Tab" || !ref.current) return;
+      const items = [...ref.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])')];
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === ref.current)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    };
     window.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -22,7 +39,7 @@ export function Modal({ title, onClose, children, width = 460 }: { title: string
       document.body.style.overflow = overflow;
       prev?.focus?.();
     };
-  }, [onClose, host]);
+  }, [host]);
   if (!host) return null;
   return createPortal(
     <div className="kh-fade fixed inset-0 z-50 flex items-end justify-center bg-[rgba(13,17,23,0.62)] sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>

@@ -53,7 +53,7 @@ export default async function HowPage() {
                 <tr className="text-muted">
                   <th className="px-6 py-3 font-medium" scope="col"></th>
                   <th className="px-6 py-3 font-medium" scope="col">Demo</th>
-                  <th className="px-6 py-3 font-medium" scope="col">Live (NEAR mainnet)</th>
+                  <th className="px-6 py-3 font-medium" scope="col">Live (real money on NEAR)</th>
                 </tr>
               </thead>
               <tbody>

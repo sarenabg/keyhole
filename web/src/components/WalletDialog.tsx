@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal, ModalHead } from "./Modal";
 import { CoinIcon, ShieldIcon, cx } from "./ui";
 import { b58encode } from "@/lib/base58";
+import { useSingleFlight } from "./useSingleFlight";
 
 // Sign in with a wallet. The wallet signs an empty request that moves no money.
 // NEAR Intents checks the signature, so the same flow works for Ethereum-style, Solana and NEAR wallets.
@@ -109,7 +110,9 @@ export function WalletDialog({ role, onClose, onDone }: { role: Role; onClose: (
   const [nearOpen, setNearOpen] = useState(false);
   const [account, setAccount] = useState(() => (typeof window !== "undefined" ? localStorage.getItem("kh_near_account") ?? "" : ""));
 
-  async function go(kind: Kind) {
+  const once = useSingleFlight();
+  const go = (...args: Parameters<typeof goNow>) => once(() => goNow(...args));
+  async function goNow(kind: Kind) {
     setError(null);
     setBusy(kind);
     try {

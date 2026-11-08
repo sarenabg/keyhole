@@ -12,6 +12,8 @@ export async function POST(req: Request) {
   const s = await demoState();
   const now = Date.now();
   const current = s.keys.find((k) => k.trader === t.id);
+  // A repeat of the same purchase within a few seconds (double click, retry) returns the first one.
+  if (current && current.days === days && now - current.boughtAt < 5000) return ok(current);
   const start = current && current.expiresAt > now ? current.expiresAt : now;
   const key = { trader: t.id, days, expiresAt: start + days * 86_400_000, paid: t.prices[days], boughtAt: now };
   s.keys = [...s.keys.filter((k) => k.trader !== t.id), key];

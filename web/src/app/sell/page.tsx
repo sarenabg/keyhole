@@ -92,7 +92,7 @@ export default async function SellPage() {
         <section className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <h1 className="m-0 font-display text-[34px] font-semibold tracking-[-0.02em]">Your earnings</h1>
-            <span className="text-[15px] text-muted">Paid straight to your NEAR Intents balance. Nothing to withdraw.</span>
+            <span className="text-[15px] text-muted">Paid straight to you on NEAR. Nothing to withdraw.</span>
           </div>
           <Link href={`/t/${encodeURIComponent(view.id)}`} className="flex h-[42px] items-center rounded-full border border-line bg-surface px-[18px] text-sm font-semibold text-ink no-underline">See my public page</Link>
         </section>

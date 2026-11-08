@@ -81,6 +81,15 @@ check("with a key, holdings are visible", open.json.holdings.length > 0 && Math.
 check("other traders stay private", (await req("/api/traders/junovale.near/trades")).status === 403);
 const tradesPage = await req("/t/maralin.near/trades");
 check("trades page shows the feed", tradesPage.text.includes("Your key") && tradesPage.text.includes("Live"));
+const shown = (t) => (t.match(/data-trade-row="1"/g) ?? []).length;
+const allPage = await req("/t/maralin.near/trades?all=1");
+check("long trade lists start short, with a Show all link", open.json.trades.length <= 12 || (shown(tradesPage.text) === 12 && tradesPage.text.includes("Show all")), `${shown(tradesPage.text)} rows of ${open.json.trades.length}`);
+check("Show all lists every trade", shown(allPage.text) === open.json.trades.length, `${shown(allPage.text)} of ${open.json.trades.length}`);
+
+// Double submissions (double clicks, retries) must not buy or copy twice.
+const before = (await req("/api/demo/keys", { json: { trader: "kenji.near", days: 30 } })).json;
+const [b1, b2] = await Promise.all([req("/api/demo/keys", { json: { trader: "kenji.near", days: 30 } }), req("/api/demo/keys", { json: { trader: "kenji.near", days: 30 } })]);
+check("a repeated key purchase within seconds isn't charged twice", Math.max(b1.json.expiresAt, b2.json.expiresAt) - before.expiresAt < 60_000, `${(b2.json.expiresAt - before.expiresAt) / 86_400_000} days extra`);
 
 // Copy a buy trade
 const buyTrade = open.json.trades.find((t) => !["USDC", "USDT"].includes(t.to));
@@ -90,6 +99,8 @@ check("copy price check works", q.status === 200 && Number(q.json.amountOut) > 0
 console.log(`  (price from ${q.json.real ? "a live NEAR Intents quote" : "the price list"}: $50 → ${q.json.amountOut} ${buyTrade.to})`);
 const copy = await req("/api/demo/copy", { json: { trader: "maralin.near", tradeId: buyTrade.id, usd: 50 } });
 check("demo copy done", copy.status === 200 && copy.json.status === "done" && copy.json.amount > 0);
+const again = await req("/api/demo/copy", { json: { trader: "maralin.near", tradeId: buyTrade.id, usd: 50 } });
+check("copying the same trade twice in a row makes one copy", again.status === 200 && again.json.id === copy.json.id);
 check("copy of another trader's trade is refused", (await req("/api/demo/copy", { json: { trader: "junovale.near", tradeId: buyTrade.id, usd: 50 } })).status === 403);
 check("copy amount must be sensible", (await req("/api/demo/copy", { json: { trader: "maralin.near", tradeId: buyTrade.id, usd: -5 } })).status === 400);
 const after = await req("/t/maralin.near/trades");

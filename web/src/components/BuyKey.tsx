@@ -8,6 +8,8 @@ import { CoinPicker, SendBox, usePoll, type Instructions, type PayState, type Pi
 import { WalletDialog } from "./WalletDialog";
 import { dateShort, pct } from "@/lib/format";
 import type { Mode, Period } from "@/lib/types";
+import { useSingleFlight } from "./useSingleFlight";
+import { radioKeys } from "./radioKeys";
 
 type TraderInfo = { id: string; name: string; avatar: number; ret: number; period: Period; prices: { 7: number; 30: number; 90: number }; cut: number; isNew?: boolean };
 const PLANS = [7, 30, 90] as const;
@@ -64,7 +66,9 @@ function BuyKeyDialog({ mode, trader, onClose }: { mode: Mode; trader: TraderInf
     onClose();
   };
 
-  async function pay() {
+  const once = useSingleFlight();
+  const pay = (...args: Parameters<typeof payNow>) => once(() => payNow(...args));
+  async function payNow() {
     setError(null);
     setStep("paying");
     try {
@@ -110,7 +114,7 @@ function BuyKeyDialog({ mode, trader, onClose }: { mode: Mode; trader: TraderInf
             </div>
           ) : (
             <div className="flex flex-col gap-[18px] p-6">
-              <div className="flex flex-col gap-2" role="radiogroup" aria-label="How long">
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label="How long" onKeyDown={radioKeys(PLANS.length, PLANS.indexOf(days), (i) => setDays(PLANS[i]))}>
                 {PLANS.map((d) => {
                   const on = d === days;
                   return (
@@ -119,6 +123,7 @@ function BuyKeyDialog({ mode, trader, onClose }: { mode: Mode; trader: TraderInf
                       type="button"
                       role="radio"
                       aria-checked={on}
+                      tabIndex={on ? 0 : -1}
                       onClick={() => setDays(d)}
                       className={cx("flex items-center justify-between gap-3 rounded-[14px] bg-surface px-4 py-3.5 text-left text-[15px]", on ? "border-2 border-accent" : "border border-line")}
                     >

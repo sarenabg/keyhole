@@ -7,6 +7,8 @@ import { CheckIcon, CoinIcon, LockIcon, PairIcon, cx } from "./ui";
 import { CoinPicker, SendBox, usePoll, type Instructions, type PayState, type Picked } from "./Pay";
 import { amount, money, pct, timeAgo } from "@/lib/format";
 import type { Mode, TradeView } from "@/lib/types";
+import { useSingleFlight } from "./useSingleFlight";
+import { radioKeys } from "./radioKeys";
 
 type TraderInfo = { id: string; name: string };
 
@@ -57,7 +59,11 @@ function CopyDialog({ mode, trader, trade, onClose }: { mode: Mode; trader: Trad
       const r = await fetch("/api/quote/copy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trader: trader.id, tradeId: trade.id, usd, asset: coin?.place.assetId }) })
         .then((x) => x.json())
         .catch(() => null);
-      if (!off && r?.amountOut) setQuote({ amountOut: r.amountOut, real: Boolean(r.real) });
+      if (off) return;
+      if (r?.amountOut) {
+        setQuote({ amountOut: r.amountOut, real: Boolean(r.real) });
+        setError(null);
+      } else setError(r?.error ?? "Couldn't get today's price. Close this and try again.");
     }, 250);
     return () => { off = true; clearTimeout(t); };
   }, [usd, coin, trade.id, trader.id]);
@@ -78,7 +84,9 @@ function CopyDialog({ mode, trader, trade, onClose }: { mode: Mode; trader: Trad
     onClose();
   };
 
-  async function confirm() {
+  const once = useSingleFlight();
+  const confirm = (...args: Parameters<typeof confirmNow>) => once(() => confirmNow(...args));
+  async function confirmNow() {
     setError(null);
     setStep("working");
     try {
@@ -133,13 +141,14 @@ function CopyDialog({ mode, trader, trade, onClose }: { mode: Mode; trader: Trad
               <>
                 <div className="flex flex-col gap-2.5">
                   <span className="text-[13px] font-medium text-muted">{mode === "demo" ? `How much of your ${DEMO_BALANCE.toLocaleString()} demo USDC?` : "How much?"}</span>
-                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Amount">
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Amount" onKeyDown={radioKeys(choices.length, pick, setPick)}>
                     {choices.map((c, i) => (
                       <button
                         key={c.label}
                         type="button"
                         role="radio"
                         aria-checked={i === pick}
+                        tabIndex={i === pick ? 0 : -1}
                         onClick={() => setPick(i)}
                         className={cx("flex flex-col items-center gap-0.5 rounded-[14px] px-1.5 py-3 text-base font-semibold", i === pick ? "border-2 border-accent bg-accent-tint text-accent-deep" : "border border-line bg-surface")}
                       >
@@ -159,17 +168,17 @@ function CopyDialog({ mode, trader, trade, onClose }: { mode: Mode; trader: Trad
                   </div>
                   <div className="h-px bg-line-soft" />
                   <div className="flex items-center justify-between bg-[#FAFAFB] p-4">
-                    <span className="flex flex-col gap-0.5"><span className="text-[13px] text-muted">You get about</span><span className="font-display text-[26px] font-semibold">{quote ? amount(Number(quote.amountOut)) : "…"}</span></span>
+                    <span className="flex flex-col gap-0.5"><span className="text-[13px] text-muted">You get about</span>{quote ? <span className="font-display text-[26px] font-semibold">{amount(Number(quote.amountOut))}</span> : <span className="kh-pulse my-[7px] block h-6 w-28 rounded-md bg-line" role="status" aria-label="Getting the live price" />}</span>
                     <span className="flex items-center gap-2 font-semibold"><CoinIcon sym={trade.to} size={26} />{trade.to}</span>
                   </div>
                 </div>
 
                 {error && <p className="m-0 rounded-xl bg-down-tint px-3.5 py-3 text-sm text-down" role="alert">{error}</p>}
 
-                <button type="button" onClick={confirm} disabled={step === "working" || (mode === "live" && !coin)} className="flex h-[54px] items-center justify-center gap-2 rounded-[14px] bg-accent text-base font-semibold text-white hover:bg-accent-ink disabled:opacity-70">
+                <button type="button" onClick={confirm} disabled={step === "working" || !quote || (mode === "live" && !coin)} className="flex h-[54px] items-center justify-center gap-2 rounded-[14px] bg-accent text-base font-semibold text-white hover:bg-accent-ink disabled:opacity-70">
                   {step === "working" ? <><span className="kh-spin h-4 w-4 rounded-full border-2 border-white border-t-transparent" />{mode === "demo" ? "Copying…" : "Getting your address…"}</> : mode === "demo" ? "Copy trade" : "Continue"}
                 </button>
-                <span className="text-center text-[13px] text-muted">{quote?.real ? "Live price from NEAR Intents" : "Today's price"} · money back if the price jumps</span>
+                <span className="text-center text-[13px] text-muted">{!quote ? "Getting the live price…" : quote.real ? "Live price from NEAR Intents · money back if the price jumps" : "Today's price · money back if the price jumps"}</span>
               </>
             )}
           </div>

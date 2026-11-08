@@ -6,6 +6,7 @@ import { WalletDialog } from "./WalletDialog";
 import { cx } from "./ui";
 import { timeAgo } from "@/lib/format";
 import type { Mode } from "@/lib/types";
+import { useSingleFlight } from "./useSingleFlight";
 
 type Settings = { name: string; prices: [number, number, number]; maxKeys: number; allowCopy: boolean; listed: boolean };
 
@@ -24,7 +25,9 @@ export function SellerSettings({ mode, initial, cut, onSaved, cta = "Save" }: { 
   const input = "min-w-0 flex-1 border-0 bg-transparent text-base font-semibold outline-none";
   const setPrice = (i: number, n: number) => setV((s) => ({ ...s, prices: s.prices.map((p, j) => (j === i ? n : p)) as [number, number, number] }));
 
-  async function submit(e: React.FormEvent) {
+  const once = useSingleFlight();
+  const submit = (...args: Parameters<typeof submitNow>) => once(() => submitNow(...args));
+  async function submitNow(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
     setBusy(true);

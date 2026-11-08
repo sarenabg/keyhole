@@ -36,7 +36,7 @@ export function Header({ ctx, active }: { ctx: Ctx; active?: "traders" | "keys" 
       </div>
       {ctx.mode === "live" && (
         <div className="border-t border-line-soft bg-ink px-4 py-1.5 text-center text-xs font-medium text-night-muted">
-          Live on NEAR mainnet · payments use real money
+          Live on NEAR · payments use real money
         </div>
       )}
     </header>
