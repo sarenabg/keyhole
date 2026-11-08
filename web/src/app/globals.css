@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Keyhole design tokens (approved design canvas, 8 Nov 2026). */
+@theme {
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-subtle: #f0f1f4;
+  --color-line: #e6e8ec;
+  --color-line-soft: #eef0f3;
+  --color-line-strong: #d5d9e0;
+  --color-ink: #0d1117;
+  --color-soft: #3d4555;
+  --color-muted: #5b6474;
+  --color-faint: #8a93a3;
+  --color-accent: #5b3df5;
+  --color-accent-ink: #4a2fe0;
+  --color-accent-deep: #3720b8;
+  --color-accent-tint: #efebff;
+  --color-accent-light: #8b7bff;
+  --color-up: #047857;
+  --color-up-ink: #046548;
+  --color-up-tint: #e7f6f0;
+  --color-up-light: #4ade9f;
+  --color-down: #c2410c;
+  --color-down-tint: #fff1ea;
+  --color-warn: #7a4a00;
+  --color-warn-tint: #fff4e0;
+  --color-night: #0d1117;
+  --color-night-muted: #aeb6c4;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --shadow-card: 0 1px 2px rgba(13, 17, 23, 0.04);
+  --shadow-pop: 0 24px 64px rgba(13, 17, 23, 0.35);
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ddd5ff;
+}
+
+@keyframes kh-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.kh-pop { animation: kh-pop 0.22s ease-out both; }
+
+@keyframes kh-fade { from { opacity: 0; } to { opacity: 1; } }
+.kh-fade { animation: kh-fade 0.2s ease-out both; }
+
+@keyframes kh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.kh-pulse { animation: kh-pulse 1.6s ease-in-out infinite; }
+
+@keyframes kh-spin { to { transform: rotate(360deg); } }
+.kh-spin { animation: kh-spin 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kh-pop, .kh-fade, .kh-pulse, .kh-spin { animation: none; }
+}

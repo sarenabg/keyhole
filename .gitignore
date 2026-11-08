@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.next-build/
+.vercel
+*.db
+*.db-journal
+.env
+.env.local
+web/tsconfig.tsbuildinfo
+contracts/keys/target/
+.DS_Store
+video/node_modules/
+video/out/frames/
+web/.next-build/
+web/.env.local
