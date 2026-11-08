@@ -1,26 +1,32 @@
-# Keyhole promo: shot list
-45 s · 120 bpm · 90 beats · formats: 16x9 (primary), 1x1
-Music: synthesized house, D dorian, drop at beat 16 · VO: none (on-screen type only)
-Look: Keyhole brand. Canvas #F5F6F8, ink #0D1117, one accent violet #5B3DF5, profit green only on numbers. Space Grotesk for display type, Inter for UI.
+# Keyhole promo v2: shot list
+About 56 s · 120 bpm · 112 beats · formats: 16x9 (primary), 1x1
+Music: bespoke synthesized score (punchy house, D dorian): sparse under the voice, hits between lines, a drop on "Meet Keyhole". Narration: see narration.md (ducked music under every line).
+Look: Keyhole brand. Canvas #F5F6F8, ink #0D1117, one accent violet #5B3DF5; profit green only on numbers. Space Grotesk display, Inter UI.
 
-| # | beats | time | shot | on screen (asset) | motion | out (transition) | sound (hits) |
-|---|-------|------|------|-------------------|--------|------------------|--------------|
-| 1 | 0-4 | 0.0-2.0 | Hook | Type: **"The best traders trade in private."** on ink | words slam in one per beat from below (stiff spring), "private" turns violet | a violet lock icon drops onto "private" | impact @0, ticks @1-3 |
-| 2 | 4-8 | 2.0-4.0 | The problem | `d02_trader_locked.png` crop: the blurred trades list + lock | card pushes up from bottom, blur breathes | type: **"So who's actually good?"** | whoosh @4, pop @6 |
-| 3 | 8-16 | 4.0-8.0 | Reveal | Keyhole icon (`logo/icon_0.svg`) scales up until its keyhole shape becomes a window onto `d01_home.png`; wordmark + **"Trade in private. Sell the view."** | log-space zoom through the keyhole mask | the home screen fills the frame on beat 16 | riser 8-16, drop impact @16 |
-| 4 | 16-24 | 8.0-12.0 | Real records | `d01_grid.png`, then zoom to `d01_card_mara.png` | grid drifts; card lifts out (bouncy spring), its **+37.4%** pulses | type: **"Every record is read straight from NEAR."** | pop @16, ticks @18,20 |
-| 5 | 24-32 | 12.0-16.0 | Proof, not promises | `d02_trader.png` crop on chart + stats | chart revealed left→right with a wipe (reads as drawing), stats chips pop one per beat | type: **"Can't be edited. Can't hide losses."** | swish @24, pops @28-31 |
-| 6 | 32-40 | 16.0-20.0 | Private by default | `d02_trader_locked.png` crop on "Mara's trades are private" | camera dollies in to the lock; blurred rows slide behind | lock icon carries into the key card | low thud @32, pop @36 |
-| 7 | 40-48 | 20.0-24.0 | Buy a key | `d02_keycard.png` → `d03_buy_dialog.png` | key card slides in from right; dialog rises over it; 30-day option highlights | type: **"Buy a key. The trader is paid instantly."** | whoosh @40, click @44 |
-| 8 | 48-52 | 24.0-26.0 | Unlocked | `d04_youre_in_dialog.png` | pop-in (bouncy), small shake | key icon whips left into the feed | chime @48 |
-| 9 | 52-62 | 26.0-31.0 | See every trade | `d05_feed.png` | slow vertical pan down the real trade list; "Copy" buttons glint one by one | type: **"See every trade."** | ticks on 54, 56, 58, 60 |
-| 10 | 62-72 | 31.0-36.0 | Copy in one tap | `d06_copy_dialog.png` → `d07_copied_dialog.png` | dialog rises; "Same as Mara" chip pulses; cut to "Copied" on 68 | type: **"Copy in one tap. Live price from NEAR Intents."** | click @66, chime @68 |
-| 11 | 72-80 | 36.0-40.0 | Traders earn | `d10_sell.png` crop on earnings + bar chart | bars grow (staggered springs), number counts up | type: **"Get paid for being right."** | rising ticks 72-78, pop @78 |
-| 12 | 80-84 | 40.0-42.0 | Phone | `m02_trader.png` and `m05_trades.png` side by side | phones slide in from left and right | phones slide apart, revealing the end card | whoosh @80 |
-| 13 | 84-90 | 42.0-45.0 | End card | Keyhole icon + wordmark, **"Trade in private. Sell the view."**, `keyhole-near.vercel.app`, small "Built on NEAR Intents" | icon settles (gentle spring), line types on | hold 3 s | final impact @84, tail |
+**What's new in v2 (motion):**
+- Narration drives everything: each line's words appear as they're spoken (kinetic type), big and bold.
+- Real screens are **rebuilt from their own pieces**: each trader card, stat chip, trade row and button is cut from the real screenshot and animated on its own (cascades, springs, parallax depth, slight 3-D tilt), so the app feels alive rather than a still picture.
+- Real numbers **count up** (the +37.4% return, earnings) in the brand font, on top of the real screen.
+- A **cursor** taps the real buttons, with a ripple, so actions read at a glance.
+- **Transitions carry shapes**: lock → keyhole logo → key; whip pans with motion blur; push-throughs into a card.
+- A living background: slow-drifting dot grid and soft violet light behind the screens (never a flat backdrop).
+
+| # | beats | time | narration | on screen (real assets) | motion | out |
+|---|-------|------|-----------|-------------------------|--------|-----|
+| 1 | 0-8 | 0-4 | "The best traders keep their trades private." | Kinetic type on ink; "private." in violet | words slam in on the voice; a padlock snaps shut on "private" | lock shrinks to a dot, whip down |
+| 2 | 8-16 | 4-8 | "So how do you know who's actually good?" | Wall of the 6 real trader cards (`d01_card_*` crops), blurred, tilted in depth | cards drift past in parallax; a violet question mark scrubs through | the cards rush toward camera |
+| 3 | 16-24 | 8-12 | "Meet Keyhole." | Keyhole logo (`logo/icon_0.svg`) | logo stamps in on the drop (impact), then the camera dives through the keyhole into the app | home screen fills the frame |
+| 4 | 24-36 | 12-18 | "Every trader's record is read straight from their private account on NEAR." | Home grid rebuilt card by card from `d01_home.png`; Mara's card lifts forward | cards cascade in (staggered springs); "+37.4%" counts up; a thin violet line traces from the card down to a "NEAR" tag | card flips into the profile |
+| 5 | 36-46 | 18-23 | "They can't edit it, and they can't hide a loss." | Profile chart + 4 stat chips (`d02_trader.png` crops); the losing trader's card (−27.6%) | chart draws itself; chips snap in one per beat; the losing card slides in beside, red number pulses | lock icon rises from the trades card |
+| 6 | 46-56 | 23-28 | "Their trades stay hidden… until you buy a key." | Blurred trades + lock (`d02_trader_locked.png`) | blurred rows slide behind frosted glass; on "key" the lock morphs into a key that turns | key flies into the key card |
+| 7 | 56-66 | 28-33 | "Pay with any coin. The trader gets paid instantly." | Key card (`d02_keycard.png`), Buy dialog (`d03_buy_dialog.png`), real coin logos | coin logos orbit into the key card; cursor taps "Pay 25 USDC"; "+23.75 USDC" flies to Mara's avatar | "You're in" pops on violet |
+| 8 | 66-76 | 33-38 | "Now you see every trade the moment it happens," | Private feed (`d05_feed.png`), rows cut out individually | rows cascade in from the right one per half-beat, each with its coin pair spinning in; live dot pulses | camera slides onto the Copy button |
+| 9 | 76-86 | 38-43 | "and copy it in one tap, at a live price." | Copy dialog (`d06_copy_dialog.png`) → Copied (`d07_copied_dialog.png`) | cursor taps Copy (ripple); dialog springs up; "32.116 NEAR" counts up; check mark draws | whip right |
+| 10 | 86-100 | 43-50 | "Traders earn for being right. Followers finally know who to trust." | Earnings (`d10_sell.png` crops) then two phones (`m02_trader.png`, `m05_trades.png`) | bars grow, "3,522 USDC" counts up; phones swing in from both sides with depth | phones part to reveal the end card |
+| 11 | 100-112 | 50-56 | "Keyhole. Trade in private. Sell the view." | Logo, wordmark, URL, "Built on NEAR Intents · NEAR HACKATHON" | logo settles with a spring; line types on with the voice; hold 3 s | end |
 
 Formats:
-- 1x1: type sits above the screen instead of beside it; screens are cropped tighter (card, dialog, feed column). Shot 12 shows one phone, centered.
-- 16x9: type on the left third, screen on the right two-thirds, except shots 1, 3 and 13 (full-frame type).
+- 1x1: type above the screen instead of beside it; screens cropped tighter (one card, the dialog, the feed column); shot 10 shows one phone.
+- 16x9: type in the left third, screens on the right two-thirds, except shots 1, 3 and 11 (full-frame).
 
-Longest gap without a new event: beats 52-62 (5 s, but the pan and the button glints keep it moving).
+Longest gap without a new event: under 2 s everywhere (narration words, counters and cascades keep it moving).

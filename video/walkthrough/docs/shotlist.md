@@ -1,25 +1,29 @@
-# Keyhole demo walkthrough: shot list
-120 s · 90 bpm · 180 beats · format: 16x9
-Music: synthesized lo-fi, F major, quiet bed under captions · VO: none
-Every screen is the real app (hosted Demo mode, plus Live-mode screens once the real-money test is done). A step label sits top-left ("1 · Find a trader"), and one short caption per shot sits at the bottom. A soft violet ring highlights what to look at.
+# Keyhole walkthrough v2: shot list
+About 2 min 16 s · 96 bpm · 218 beats · format: 16x9
+Music: bespoke synthesized lo-fi house, F major, kept low under the narration (ducked), with small accents between lines. Narration: see narration.md.
+Every screen is the real app (Demo mode on the hosted site, plus real Live-mode screens).
 
-| # | beats | time | step / caption | on screen (asset) | motion | out |
-|---|-------|------|----------------|-------------------|--------|-----|
-| 1 | 0-8 | 0-5 | **Keyhole in 2 minutes** · "Demo mode: simulated traders, today's real prices" | Keyhole icon + wordmark on canvas | icon springs in, title types on | push into the home screen |
-| 2 | 8-20 | 5-13 | **1 · Find a trader** · "Ranked by return. One is losing money: nothing is cherry-picked." | `d01_home.png` | slow push; ring on the period switch, then on the losing card | zoom onto Mara's card |
-| 3 | 20-32 | 13-21 | "Return, win rate, biggest dip: read from the trader's private NEAR account." | `d01_card_mara.png` large | callout lines to the return, win rate and biggest dip, one per bar | card flies up into the profile |
-| 4 | 32-46 | 21-31 | **2 · Check the record** · "The chart and stats are public. Mara can't edit them." | `d02_trader.png` | pan across chart → stats | scroll down |
-| 5 | 46-56 | 31-37 | "The trades are private." | `d02_trader_locked.png` | dolly onto the lock | cut |
-| 6 | 56-64 | 37-43 | "Even the data API refuses without a key (403)." | `d13_api_403.png` | quick punch-in on the message | cut back |
-| 7 | 64-80 | 43-53 | **3 · Buy a key** · "7, 30 or 90 days. 95% goes to the trader, instantly." | `d03_buy_dialog.png` → `d03_buy_dialog_90.png` → `d03_buy_paying.png` | dialog rises; ring moves 30d → 90d ("Save 20%") → Pay | dialog flips to success |
-| 8 | 80-88 | 53-59 | "You're in." | `d04_youre_in_dialog.png` | pop | push into the feed |
-| 9 | 88-104 | 59-69 | **4 · See the trades** · "Each change in Mara's holdings is a trade: size, price, and how it has done since." | `d05_trades.png`, `d05_feed.png` | pan down the feed; ring on one row's size and result | ring lands on "Copy" |
-| 10 | 104-120 | 69-80 | **5 · Copy a trade** · "The amount comes from a live NEAR Intents price check." | `d06_copy_dialog.png` → `d06_copy_dialog_25.png` | ring on "Same as Mara", then 25%; amount updates | press "Copy trade" |
-| 11 | 120-130 | 80-87 | "Copied. Your copies are tracked." | `d07_copied_dialog.png` → `d08_trades_after.png` | pop, then the row shows "Copied" | cut |
-| 12 | 130-136 | 87-91 | "Or copy automatically (Demo today)." | `d08_autocopy_on.png` | toggle flips on | cut |
-| 13 | 136-152 | 91-101 | **6 · For traders** · "Sign once with your wallet. Set a price. Get paid." | `d11_start.png` → `d11_start_3.png` → `d10_sell.png` | steps tick through; earnings bars grow | slide to phones |
-| 14 | 152-164 | 101-109 | "Made for phones too." | `m02_trader.png`, `m05_trades.png`, `m06_copy.png` | three phones slide in, staggered | cut |
-| 15 | 164-176 | 109-117 | **Live mode** · "The same app on NEAR mainnet: real wallets, real payments through NEAR Intents." | Live-mode screens (sign-in, payment address) from the real-money test; fallback `d12_how.png` table | pan | to end card |
-| 16 | 176-180 | 117-120 | End card | icon, wordmark, `keyhole-near.vercel.app`, `github.com/sarenabg/keyhole` | settle | hold |
+**What's new in v2 (motion):**
+- Narrated, with captions that appear word by word as they're spoken (bottom band), plus the step badge.
+- Each screen is **brought to life** from its own pieces: cards, rows, chips and dialogs are cut from the real screenshot and animate in (cascades, springs, depth), instead of a static picture with a camera move.
+- A **cursor** performs every action (tap, ripple, scroll), so it feels like watching someone use the app.
+- **Counters** on real numbers (return, amounts, earnings); **callout lines** draw from labels to the exact spot.
+- **Smooth transitions**: push-throughs into the element that opens the next screen (card → profile, Get a key → dialog, Copy → copy dialog), whip pans between steps, a keyhole-shaped wipe into each new step.
+- Living background: soft drifting dot grid and violet light behind the stage.
 
-Longest gap without a new event: beats 88-104 (about 10 s), kept alive by the pan and the moving ring.
+| # | beats | time | step / narration | on screen (real assets) | motion |
+|---|-------|------|------------------|-------------------------|--------|
+| 1 | 0-14 | 0-9 | Intro: "Here's Keyhole in two minutes…prices are real." | Logo + title; "Demo" badge | title types on with the voice; badge stamps in; keyhole wipe into step 1 |
+| 2 | 14-34 | 9-21 | 1 · "Start with the traders… Nothing is cherry-picked." | `d01_home_full.png` rebuilt card by card | 6 cards cascade in; camera glides to the losing card (−27.6% pulses red); ring |
+| 3 | 34-52 | 21-33 | "Each card shows the return…private account on NEAR." | `d01_card_mara.png` lifted out, large | callout lines draw to return / win rate / biggest dip as each is named; +37.4% counts up |
+| 4 | 52-66 | 33-41 | 2 · "Open a trader. The chart and the numbers are public…" | `d02_trader.png` | push-through from the card; chart draws itself; 4 stat chips snap in |
+| 5 | 66-80 | 41-50 | "But the trades themselves are private. Even our data feed says no…" | `d02_trader_locked.png`, `d13_api_403.png` | frosted rows slide; lock drops; the 403 message types out in a terminal-style panel cut from the real screen |
+| 6 | 80-102 | 50-64 | 3 · "So let's buy one…ninety-five percent, instantly." | `d03_buy.png` + dialog states (`_90`, `_paying`) | cursor taps Get a key → dialog springs up; cursor taps 30d → 90d (Save 20% pops) → back to 30 → Pay; "23.75 USDC → trader" flies |
+| 7 | 102-108 | 64-68 | "And we're in." | `d04_youre_in_dialog.png` | pop + a burst of small key glyphs |
+| 8 | 108-132 | 68-83 | 4 · "Now you see every trade…within minutes." | `d05_trades.png` rows cut individually, `d05_feed.png` | rows cascade in; ring + callouts on size, price and "since"; live dot pulses; smooth scroll |
+| 9 | 132-152 | 83-95 | 5 · "See one you like? Tap Copy…live market price." | `d06_copy.png`, `d06_copy_dialog_25.png` | cursor taps Copy; dialog rises; cursor taps 25% → amount morphs; "Live price" tag lights |
+| 10 | 152-166 | 95-104 | "Copy, and it's done…copy automatically." | `d07_copied.png`, `d08_trades_after.png`, `d08_autocopy_on.png` | check mark draws; row turns "Copied"; auto-copy switch flips with a spring |
+| 11 | 166-184 | 104-115 | 6 · "If you trade…start earning." | `d11_start.png` → `d11_start_3.png` → `d10_sell.png` | three steps tick with check marks; earnings bars grow; total counts up |
+| 12 | 184-192 | 115-120 | "It works just as well on your phone." | `m02_trader.png`, `m05_trades.png`, `m06_copy.png` | three phones swing in with depth, staggered |
+| 13 | 192-210 | 120-131 | Live: "And it's not just a demo…any coin." | `l01_home_live.png`, `l02_signin.png`, `l05_pay_address.png` | "LIVE · NEAR mainnet" bar slides down; wallet dialog springs; QR + amount highlight |
+| 14 | 210-218 | 131-136 | End: "Keyhole. Trade in private. Sell the view." | Logo, wordmark, links | logo settles; lines type on; hold |

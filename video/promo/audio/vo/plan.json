@@ -1,0 +1,158 @@
+{
+ "take": "audio/vo/takeA.mp3",
+ "tempo": 1.0,
+ "segments": [
+  [
+   0.0,
+   2.38,
+   "The best traders keep their trades private."
+  ],
+  [
+   2.8,
+   5.03,
+   "So how do you know who's actually good?"
+  ],
+  [
+   5.6,
+   5.95,
+   "Meet"
+  ],
+  [
+   6.15,
+   6.68,
+   "Keyhole."
+  ],
+  [
+   7.05,
+   10.71,
+   "Every trader's record is read straight from their private account on NEAR."
+  ],
+  [
+   11.04,
+   11.86,
+   "They can't edit it,"
+  ],
+  [
+   12.12,
+   13.45,
+   "and they can't hide a loss."
+  ],
+  [
+   13.77,
+   15.24,
+   "Their trades stay hidden..."
+  ],
+  [
+   15.74,
+   17.06,
+   "until you buy a key."
+  ],
+  [
+   17.52,
+   18.62,
+   "Pay with any coin."
+  ],
+  [
+   19.01,
+   20.68,
+   "The trader gets paid instantly."
+  ],
+  [
+   21.04,
+   23.96,
+   "Now you see every trade the moment it happens,"
+  ],
+  [
+   24.22,
+   25.61,
+   "and copy it in one tap,"
+  ],
+  [
+   25.88,
+   26.9,
+   "at a live price."
+  ],
+  [
+   27.3,
+   28.93,
+   "Traders earn for being right."
+  ],
+  [
+   29.31,
+   31.5,
+   "Followers finally know who to trust."
+  ],
+  [
+   31.9,
+   32.35,
+   "Keyhole."
+  ],
+  [
+   32.73,
+   33.58,
+   "Trade in private."
+  ],
+  [
+   33.85,
+   34.62,
+   "Sell the view."
+  ]
+ ],
+ "lines": [
+  [
+   0,
+   0,
+   0.5
+  ],
+  [
+   1,
+   1,
+   8.5
+  ],
+  [
+   2,
+   3,
+   16
+  ],
+  [
+   4,
+   4,
+   24.5
+  ],
+  [
+   5,
+   6,
+   36.5
+  ],
+  [
+   7,
+   8,
+   46.5
+  ],
+  [
+   9,
+   10,
+   56.5
+  ],
+  [
+   11,
+   11,
+   66.5
+  ],
+  [
+   12,
+   13,
+   76.5
+  ],
+  [
+   14,
+   15,
+   86.5
+  ],
+  [
+   16,
+   18,
+   100.5
+  ]
+ ]
+}
