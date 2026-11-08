@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon } from "./ui";
 
 export function Modal({ title, onClose, children, width = 460 }: { title: string; onClose: () => void; children: ReactNode; width?: number }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Rendered at the top of the page: a dialog opened from the (blurred, sticky) header would
+  // otherwise be trapped inside the header's box and appear cut off.
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setHost(document.body), []);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.focus();
@@ -17,8 +22,9 @@ export function Modal({ title, onClose, children, width = 460 }: { title: string
       document.body.style.overflow = overflow;
       prev?.focus?.();
     };
-  }, [onClose]);
-  return (
+  }, [onClose, host]);
+  if (!host) return null;
+  return createPortal(
     <div className="kh-fade fixed inset-0 z-50 flex items-end justify-center bg-[rgba(13,17,23,0.62)] sm:items-center sm:p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={ref}
@@ -31,7 +37,8 @@ export function Modal({ title, onClose, children, width = 460 }: { title: string
       >
         {children}
       </div>
-    </div>
+    </div>,
+    host,
   );
 }
 

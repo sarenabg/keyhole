@@ -1,158 +1,92 @@
-// Keyhole promo: pure function of time. window.seek(t) paints frame t (see lib/motion.js).
-// Timing is in beats (u) on the measured grid (120 bpm). docs/shotlist.md is the plan.
+// Keyhole promo v2: narrated, piece-by-piece motion over the real app. Pure function of time.
+// 120 bpm grid, 112 beats (56 s). Shot list: docs/shotlist.md · narration: docs/narration.md · vo.json.
 import * as M from './lib/motion.js';
+import * as K from './lib/kit.js';
 
-const { W, H, FORMAT, E, prog, lerp, clamp, springU, SPRING, wobble, font, layout, glyph, text, fill, rrect, shake, bump } = M;
-
-const C = { ink: '#0D1117', canvas: '#F5F6F8', violet: '#5B3DF5', white: '#FFFFFF', muted: '#5B6474', green: '#047857', night: '#AEB6C4' };
-const DISPLAY = 'Display', UI = 'UI';
+const { W, H, FORMAT, E, prog, lerp, clamp, springU, SPRING, font, text, rrect, bump, shake } = M;
+const { C, DISPLAY, UI, piece, enter, leave, backdrop, counter, cursorPath, logo, lockIcon, kinetic, spokenLine } = K;
 const SQ = FORMAT.square;
+let VO = null;
+
+// ------------------------------------------------------------------ layout
+const L = FORMAT.pick({
+  '16x9': { tx: 120, tw: 650, ty: 330, ts: 74, sx: 840, sw: 990, sy: 70, sh: 940 },
+  '1x1': { tx: 70, tw: 940, ty: 140, ts: 56, sx: 70, sw: 940, sy: 380, sh: 640 },
+});
+const box = (w, h) => ({ x: L.sx + (L.sw - w) / 2, y: L.sy + (L.sh - h) / 2 });
+
+// Real-screen geometry (2x screenshots), measured with Playwright (measure3.mjs).
+const CARDS = [[240, 632], [1053, 632], [1867, 632], [240, 1313], [1053, 1313], [1867, 1313]].map(([x, y]) => [x, y, 773, 641]);
+const GRID = [240, 632, 2400, 1322];
+const RET = [46, 173, 232, 102];
+const MAIN = [240, 194, 1711, 1150];
+const CHART = [298, 646, 1595, 440], STATS = [298, 1134, 1595, 152];
+const LOCKED = [700, 1384, 800, 416], LOCK_AT = [1096, 1607];
+const FEED_HEAD = 116, FEED_ROW = 156;
+const COPY_BTN = [1518, 465, 143, 80];
+const BUY_PAY = [48, 1041, 824, 108];
+const CP_SAME = [328, 418, 264, 140], CP_GO = [48, 1006, 824, 108];
+const SELL = [240, 537, 1711, 836], EARNED = [40, 91, 496, 102];
 
 const HITS = [
-  [0, 'hook word 1', 'impact'],
-  [0.45, 'word', 'tick'], [0.9, 'word', 'tick'], [1.35, 'word', 'tick'], [1.8, 'word', 'tick'],
-  [2.25, 'private', 'pop', { pitch: 'D6' }],
-  [3, 'lock drops', 'thud'],
-  [4, 'locked card', 'whoosh', { len: 0.4 }],
-  [4.6, 'question', 'pop', { pitch: 'A5' }],
-  [8, 'logo', 'bell', { pitch: 'D6' }],
-  [9, 'wordmark', 'tick'],
-  [10.5, 'tagline', 'blip', { pitch: 'A5' }],
-  [16, 'drop: into the app', 'impact', { riser: true }],
-  [18, 'card lifts', 'pop', { pitch: 'D6' }],
-  [20, 'return pulse', 'blip', { pitch: 'F#6' }],
-  [22, 'return pulse', 'blip', { pitch: 'A6' }],
-  [24, 'record', 'whoosh', { len: 0.35, from: 2400, to: 600 }],
-  [28, 'stat', 'pop', { pitch: 'D5' }], [28.75, 'stat', 'pop', { pitch: 'F5' }], [29.5, 'stat', 'pop', { pitch: 'A5' }], [30.25, 'stat', 'pop', { pitch: 'D6' }],
-  [32, 'private', 'sub', { len: 0.8 }],
-  [36, 'lock close', 'thud'],
-  [40, 'key card', 'whoosh', { len: 0.4 }],
-  [43, 'buy dialog', 'pop', { pitch: 'A5' }],
-  [46.5, 'pay', 'click'],
-  [48, "you're in", 'coins'],
-  [51.6, 'whip', 'whoosh', { len: 0.3, from: 600, to: 3000 }],
-  [54, 'trade', 'tick'], [56, 'trade', 'tick'], [58, 'trade', 'tick'], [60, 'trade', 'tick'],
-  [62, 'copy dialog', 'whoosh', { len: 0.35 }],
-  [66, 'same as Mara', 'click'],
-  [68, 'copied', 'bell', { pitch: 'A6' }],
-  [72, 'earnings', 'whoosh', { len: 0.35, from: 2400, to: 600 }],
-  [73, 'bars', 'tick'], [74, 'bars', 'tick'], [75, 'bars', 'tick'],
-  [78, 'paid', 'coins'],
-  [80, 'phones', 'whoosh', { len: 0.4 }],
-  [84, 'end card', 'impact'],
-  [84.5, 'logo', 'bell', { pitch: 'D6' }],
+  [0.5, 'first word', 'impact'],
+  [5, 'lock shuts', 'thud'],
+  [8, 'wall of traders', 'whoosh', { len: 0.4 }],
+  [15.6, 'rush', 'whoosh', { len: 0.3, from: 600, to: 3000 }],
+  [16, 'Meet Keyhole: drop', 'impact'],
+  [17.4, 'wordmark', 'bell', { pitch: 'D6' }],
+  [20, 'dive', 'riser', { len: 2 }],
+  [24, 'cards', 'whoosh', { len: 0.3 }],
+  [24.4, 'card', 'pop', { pitch: 'D5' }], [24.8, 'card', 'pop', { pitch: 'F5' }], [25.2, 'card', 'pop', { pitch: 'A5' }],
+  [25.6, 'card', 'pop', { pitch: 'C6' }], [26, 'card', 'pop', { pitch: 'D6' }], [26.4, 'card', 'pop', { pitch: 'F6' }],
+  [30, 'Mara lifts', 'whoosh', { len: 0.3, from: 2400, to: 900 }],
+  [30.5, 'count', 'type', { n: 10, len: 1.2 }],
+  [33.5, 'NEAR tag', 'blip', { pitch: 'A6' }],
+  [36, 'record', 'whoosh', { len: 0.35, from: 2400, to: 600 }],
+  [40, 'stat', 'pop', { pitch: 'D5' }], [40.6, 'stat', 'pop', { pitch: 'F5' }], [41.2, 'stat', 'pop', { pitch: 'A5' }], [41.8, 'stat', 'pop', { pitch: 'D6' }],
+  [43, 'loss slides in', 'thud'],
+  [46, 'private', 'sub', { len: 0.8 }],
+  [47, 'lock', 'click'],
+  [52.5, 'lock becomes key', 'boing', { pitch: 'A5' }],
+  [56, 'key card', 'whoosh', { len: 0.4 }],
+  [57.5, 'coins', 'coins'],
+  [60, 'dialog', 'pop', { pitch: 'A5' }],
+  [62.5, 'pay', 'click'],
+  [63.2, 'paid', 'coins'],
+  [66, 'feed', 'whoosh', { len: 0.35 }],
+  ...Array.from({ length: 8 }, (_, i) => [66.4 + i * 0.5, 'row', 'tick']),
+  [76.5, 'tap Copy', 'click'],
+  [77.2, 'copy dialog', 'pop', { pitch: 'D6' }],
+  [80, 'same as Mara', 'click'],
+  [82, 'copy', 'click'],
+  [82.6, 'copied', 'bell', { pitch: 'A6' }],
+  [86, 'earnings', 'whoosh', { len: 0.35, from: 2400, to: 600 }],
+  [86.6, 'count', 'type', { n: 12, len: 1.4 }],
+  [93, 'phones', 'whoosh', { len: 0.4 }],
+  [100, 'end card', 'impact'],
+  [100.5, 'logo', 'bell', { pitch: 'D6' }],
 ];
 
-// ------------------------------------------------------------------ layout per format
-const LAY = FORMAT.pick({
-  '16x9': { tx: 130, tw: 640, ty: null, sx: 830, sw: 990, sy: 70, sh: 940, cap: 92, sub: 34 },
-  '1x1': { tx: 80, tw: 920, ty: 120, sx: 80, sw: 920, sy: 330, sh: 680, cap: 74, sub: 30 },
-});
-
 // ------------------------------------------------------------------ helpers
-
-// A real screenshot (or a crop of one) in a white rounded card with a soft shadow.
-function card(ctx, img, src, x, y, w, h, { r = 28, shadow = 1, alpha = 1 } = {}) {
-  if (!img || alpha <= 0) return;
-  ctx.save();
-  ctx.globalAlpha *= alpha;
-  if (shadow) {
-    ctx.save();
-    ctx.shadowColor = `rgba(13,17,23,${0.16 * shadow})`; ctx.shadowBlur = 70; ctx.shadowOffsetY = 26;
-    rrect(ctx, x, y, w, h, r); ctx.fillStyle = C.white; ctx.fill();
-    ctx.restore();
-  }
-  rrect(ctx, x, y, w, h, r); ctx.clip();
-  if (src) ctx.drawImage(img, src[0], src[1], src[2], src[3], x, y, w, h);
-  else ctx.drawImage(img, x, y, w, h);
-  ctx.restore();
+const ACC = { private: C.violet, NEAR: C.violet, key: C.violet, instantly: C.violet, tap: C.violet, Keyhole: C.violet, trust: C.violet, loss: C.red, hidden: C.violet, coin: C.violet, right: C.violet };
+function words(ctx, t, opts = {}) {
+  const s = spokenLine(VO, t);
+  if (!s) return;
+  kinetic(ctx, t, s.line, s.end, { x: L.tx, y: L.ty, w: L.tw, size: L.ts, accent: ACC, ...opts });
 }
+const wordT = (line, w) => { const L0 = VO.lines[line]; const x = L0.words.find((d) => d.w.toLowerCase().startsWith(w)); return x ? x.t0 : L0.t0; };
 
-// Words that spring up one by one from behind their own baseline. lines: [[word, color?], ...][]
-function words(ctx, u, lines, { x, y, size, lineH = size * 1.02, u0, step = 0.18, color = C.ink, family = DISPLAY, weight = 600, exit = null, align = 'left' }) {
-  const f = font(size, weight, family);
-  const track = -0.025 * size;
-  let i = 0;
-  lines.forEach((line, li) => {
-    const str = line.map((w) => w[0]).join(' ');
-    const L = layout(ctx, str, f, track);
-    const base = y + li * lineH;
-    const ox = align === 'center' ? x - L.width / 2 : x;
-    let gi = 0;
-    line.forEach(([w, col]) => {
-      const start = u0 + i * step;
-      const k = springU(u, start, SPRING.snappy);
-      const ex = exit ? E.inBack(prog(u, exit + i * 0.03, exit + 0.4 + i * 0.03), 1.3) : 0;
-      [...w].forEach(() => {
-        const g = L.glyphs[gi++];
-        if (k <= 0) return;
-        ctx.save();
-        ctx.beginPath(); ctx.rect(0, base - size * 1.1, W, size * 1.4); ctx.clip();
-        glyph(ctx, g.ch, ox + g.cx, base + (1 - k) * size * 1.1 - ex * size * 1.4, f, col ?? color);
-        ctx.restore();
-      });
-      gi++; // the space
-      i++;
-    });
-  });
-}
-
-// Plain sentence → lines of [word] for words().
-const W_ = (s, accent = {}) => s.split('\n').map((l) => l.split(' ').map((w) => [w, accent[w]]));
-
-// Caption block in the format's text area: a big line and an optional small line under it.
-function caption(ctx, u, big, small, u0, u1, opts = {}) {
-  const size = opts.size ?? LAY.cap;
-  const lines = W_(big, opts.accent);
-  const x = LAY.tx;
-  const y = LAY.ty !== null ? LAY.ty + size * 0.8 : H / 2 - ((lines.length - 1) * size * 1.02) / 2 + size * 0.3 - (small ? 30 : 0);
-  words(ctx, u, lines, { x, y, size, u0, exit: u1, color: opts.color ?? C.ink });
-  if (small) {
-    const k = E.outQuint(prog(u, u0 + 1, u0 + 1.8)) * (1 - prog(u, u1, u1 + 0.4));
-    if (k > 0) {
-      ctx.save(); ctx.globalAlpha = k;
-      const sy = LAY.ty !== null ? y + size * (lines.length - 1) * 1.02 + 58 : y + (lines.length - 1) * size * 1.02 + 70;
-      text(ctx, small, x + 4, sy + (1 - k) * 18, font(LAY.sub, 500, UI), opts.subColor ?? C.muted);
-      ctx.restore();
-    }
-  }
-}
-
-// Keyhole glyph geometry in the 32-unit logo box (from the real logo SVG).
-function keyholePath(ctx, cx, cy, s) {
-  // s = px per logo unit; (cx, cy) = logo box centre.
-  const X = (v) => cx + (v - 16) * s, Y = (v) => cy + (v - 16) * s;
-  ctx.beginPath();
-  ctx.arc(X(16), Y(13.667), 3.333 * s, 0, M.TAU);
-  ctx.moveTo(X(14.4), Y(16)); ctx.lineTo(X(13.333), Y(22)); ctx.lineTo(X(18.667), Y(22)); ctx.lineTo(X(17.6), Y(16)); ctx.closePath();
-}
-
-function logo(ctx, cx, cy, size, { keyFill = C.white } = {}) {
-  const s = size / 32;
-  rrect(ctx, cx - size / 2, cy - size / 2, size, size, 9 * s);
-  ctx.fillStyle = C.violet; ctx.fill();
-  keyholePath(ctx, cx, cy, s);
-  ctx.fillStyle = keyFill; ctx.fill('nonzero');
-}
-
-function lockIcon(ctx, cx, cy, r, color = C.white, bg = C.violet) {
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, M.TAU); ctx.fillStyle = bg; ctx.fill();
-  ctx.strokeStyle = color; ctx.lineWidth = r * 0.14; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const bw = r * 0.82, bh = r * 0.62;
-  rrect(ctx, cx - bw / 2, cy - bh * 0.15, bw, bh, r * 0.12); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy - bh * 0.15, bw * 0.3, Math.PI, 0); ctx.lineTo(cx + bw * 0.3, cy - bh * 0.15); ctx.moveTo(cx - bw * 0.3, cy - bh * 0.15); ctx.stroke();
-  ctx.restore();
-}
-
-// A pulsing violet ring around a box (to point at something on a real screen).
-function ringAt(ctx, x, y, w, h, k, r = 18) {
+function chipText(ctx, str, x, y, k, color = C.green) {
   if (k <= 0) return;
   ctx.save();
-  ctx.globalAlpha = k;
-  ctx.strokeStyle = C.violet; ctx.lineWidth = 6;
-  const g = (1 - k) * 18 + 8;
-  rrect(ctx, x - g, y - g, w + 2 * g, h + 2 * g, r + g); ctx.stroke();
+  ctx.globalAlpha = clamp(k * 1.5);
+  const f = font(34, 600, UI);
+  ctx.font = f;
+  const w = ctx.measureText(str).width + 44;
+  ctx.translate(x, y); ctx.scale(k, k);
+  rrect(ctx, -w / 2, -32, w, 64, 32); ctx.fillStyle = C.white;
+  ctx.shadowColor = 'rgba(13,17,23,0.18)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; ctx.fill(); ctx.shadowColor = 'transparent';
+  text(ctx, str, 0, 12, f, color, 'center');
   ctx.restore();
 }
 
@@ -160,314 +94,368 @@ function phone(ctx, img, x, y, w, rot = 0) {
   const h = w / 0.462;
   ctx.save();
   ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.translate(-w / 2, -h / 2);
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 30;
+  ctx.save(); ctx.shadowColor = 'rgba(13,17,23,0.35)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 30;
   rrect(ctx, -12, -12, w + 24, h + 24, 52); ctx.fillStyle = '#1B2130'; ctx.fill(); ctx.restore();
-  card(ctx, img, null, 0, 0, w, h, { r: 40, shadow: 0 });
+  rrect(ctx, 0, 0, w, h, 40); ctx.clip(); ctx.drawImage(img, 0, 0, w, h);
   ctx.restore();
 }
 
 // ------------------------------------------------------------------ scenes
-
-function s1Hook(ctx, u) {
-  fill(ctx, C.ink);
-  const size = FORMAT.pick({ '16x9': 150, '1x1': 118 });
-  const x = FORMAT.pick({ '16x9': 160, '1x1': 80 });
-  const y = H / 2 - size * 0.25;
-  const lines = [[['The'], ['best'], ['traders']], [['trade'], ['in'], ['private.', C.violet]]];
-  words(ctx, u, lines.map((l) => l.map(([w, c]) => [w, c ?? C.white])), { x, y, size, u0: -0.2, step: 0.45, exit: 3.55 });
-  // the lock drops onto "private."
-  const f = font(size, 600, DISPLAY);
-  const L = layout(ctx, 'trade in private.', f, -0.025 * size);
-  const px = x + L.glyphs[9].x + layout(ctx, 'private.', f, -0.025 * size).width * 0.45;
-  const k = springU(u, 2.75, SPRING.bouncy);
-  const ex = E.inBack(prog(u, 3.6, 3.95), 1.3);
-  if (k > 0) lockIcon(ctx, px, y + size * 1.02 - size * 1.05 - (1 - k) * 260 - ex * 400, size * 0.3, C.white, C.violet);
+function s1(ctx, u, t) {
+  backdrop(ctx, t, { dark: true });
+  const s = spokenLine(VO, t);
+  const size = FORMAT.pick({ '16x9': 124, '1x1': 98 });
+  const x = SQ ? 70 : 150, w = SQ ? 940 : 1500;
+  const out = leave(u, 7.4, 0.6);
+  ctx.save(); ctx.translate(0, -out * H * 0.6);
+  if (s) kinetic(ctx, t, s.line, 99, { x, y: H / 2 + 10, w, size, color: C.white, accent: { private: C.violet } });
+  // the lock is there from frame 0, open; it snaps shut on "private"
+  const tp = wordT(0, 'private');
+  const k = M.spring(t + 0.25, SPRING.bouncy);
+  const snap = M.spring(t - tp - 0.45, SPRING.bouncy);
+  lockIcon(ctx, SQ ? W / 2 : W / 2, H / 2 - size * 1.55, (78 + 10 * snap) * k, { shut: E.outCubic(prog(t, tp + 0.4, tp + 0.7)) });
+  ctx.restore();
 }
 
-const LOCKED_SRC = [700, 1384, 800, 416];
-function s2Question(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 3.3, SPRING.snappy);
-  const out = E.inCubic(prog(u, 7.5, 8));
-  const w = FORMAT.pick({ '16x9': 960, '1x1': 900 });
-  const h = w * (LOCKED_SRC[3] / LOCKED_SRC[2]);
-  const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2;
-  const y0 = SQ ? 520 : (H - h) / 2;
-  const y = lerp(H + 40, y0, k) - out * 60;
-  card(ctx, IMG.locked, LOCKED_SRC, x, y, w, h, { r: 26, alpha: 1 - out });
-  caption(ctx, u, "So who's\nactually good?", null, 4.6, 7.55);
-}
-
-function s3Reveal(ctx, u, IMG) {
-  fill(ctx, C.ink);
-  const size = FORMAT.pick({ '16x9': 230, '1x1': 200 });
-  const z = E.inOutCubic(prog(u, 12.6, 16)); // zoom progress
-  const cx0 = SQ ? W / 2 : W / 2 - 300, cy0 = SQ ? H / 2 - 150 : H / 2 - 70;
-  // the zoom heads for the keyhole and grows in log space
-  const kIn = springU(u, 7.8, SPRING.bouncy);
-  const sc = kIn * (1 * (70 / 1) ** z);
-  const focusY = cy0 + (15 - 16) * (size / 32);
-  const cx = lerp(cx0, W / 2, z), cy = lerp(cy0, H / 2 + (cy0 - focusY) * 0, z);
-  const s = (size / 32) * sc;
-  if (sc > 0) {
-    // violet tile
-    rrect(ctx, cx - (size * sc) / 2, cy - (size * sc) / 2, size * sc, size * sc, 9 * s);
-    ctx.fillStyle = C.violet; ctx.fill();
-    // keyhole: white, then a window onto the real app as we push through
-    ctx.save();
-    keyholePath(ctx, cx, cy - (15 - 16) * s * 0 , s);
-    ctx.fillStyle = C.white; ctx.fill();
-    ctx.clip();
-    const win = prog(u, 12.6, 14);
-    if (win > 0 && IMG.home) {
-      ctx.globalAlpha = win;
-      M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 });
+function s2(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const cw = 560, ch = cw * (641 / 773);
+  const rush = E.inExpo(prog(u, 15.2, 16));
+  ctx.save();
+  M.zoomAbout(ctx, 1 + rush * 1.6, W / 2, H / 2);
+  for (let col = -1; col < 5; col++) {
+    for (let row = -1; row < 3; row++) {
+      const idx = ((col * 3 + row * 5) % 6 + 6) % 6;
+      const speed = 60 + (((col % 3) + 3) % 3) * 30;
+      const x = col * (cw + 70) + 40 - (t - 4) * speed * 0.6;
+      const y = row * (ch + 60) + 120 - (((t - 4) * speed) % (ch + 60)) + (((col % 2) + 2) % 2) * 200;
+      piece(ctx, IMG.homeFull, CARDS[idx], x, y, cw, ch, { r: 22, blur: 7, alpha: 0.85 * (1 - rush), tilt: 0.3 * Math.sin(col + row), shadow: 0.6 });
     }
+  }
+  ctx.restore();
+  const s = spokenLine(VO, t);
+  if (s) {
+    const g = ctx.createLinearGradient(0, H * 0.28, 0, H * 0.76);
+    g.addColorStop(0, 'rgba(245,246,248,0)'); g.addColorStop(0.3, 'rgba(245,246,248,0.94)'); g.addColorStop(0.7, 'rgba(245,246,248,0.94)'); g.addColorStop(1, 'rgba(245,246,248,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, H * 0.28, W, H * 0.48);
+    kinetic(ctx, t, s.line, s.end, { x: SQ ? 70 : 160, y: H / 2 + 10, w: SQ ? 940 : 1600, size: FORMAT.pick({ '16x9': 104, '1x1': 82 }), align: 'center', accent: { good: C.violet } });
+  }
+}
+
+function s3(ctx, u, t, IMG) {
+  backdrop(ctx, t, { dark: true });
+  const size = FORMAT.pick({ '16x9': 230, '1x1': 200 });
+  const z = E.inOutCubic(prog(u, 19.6, 24));
+  const tMeet = wordT(2, 'meet'), tKey = wordT(2, 'keyhole');
+  const kIn = M.spring(t - tMeet + 0.05, SPRING.bouncy);
+  const sc = kIn * 70 ** z;
+  const cx0 = SQ ? W / 2 : W / 2 - 300, cy0 = SQ ? H / 2 - 140 : H / 2 - 40;
+  const cx = lerp(cx0, W / 2, z), cy = lerp(cy0, H / 2, z);
+  if (sc > 0) {
+    ctx.save();
+    shake(ctx, u, 16, 8, 3, 0.2);
+    rrect(ctx, cx - (size * sc) / 2, cy - (size * sc) / 2, size * sc, size * sc, 9 * (size / 32) * sc);
+    ctx.fillStyle = C.violet; ctx.fill();
+    K.keyholePath(ctx, cx, cy, (size / 32) * sc);
+    ctx.fillStyle = C.white; ctx.fill(); ctx.clip();
+    const win = prog(u, 19.6, 21);
+    if (win > 0) { ctx.globalAlpha = win; M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 }); }
     ctx.restore();
   }
-  // wordmark + tagline leave as the zoom starts
-  const fade = 1 - prog(u, 12.4, 13.2);
+  const fade = 1 - prog(u, 19.4, 20.2);
   if (fade > 0) {
     ctx.save(); ctx.globalAlpha = fade;
+    const kw = M.spring(t - tKey + 0.05, SPRING.snappy);
     const wx = SQ ? W / 2 : cx0 + size / 2 + 60;
-    words(ctx, u, [[['Keyhole', C.white]]], { x: wx, y: SQ ? cy0 + size / 2 + 190 : cy0 + size * 0.28, size: FORMAT.pick({ '16x9': 190, '1x1': 150 }), u0: 8.9, align: SQ ? 'center' : 'left' });
-    const tk = E.outQuint(prog(u, 10.4, 11.4));
-    if (tk > 0) {
-      ctx.globalAlpha = fade * tk;
-      text(ctx, 'Trade in private. Sell the view.', SQ ? W / 2 : wx + 8, (SQ ? cy0 + size / 2 + 290 : cy0 + size * 0.28 + 110) + (1 - tk) * 20, font(FORMAT.pick({ '16x9': 54, '1x1': 46 }), 500, UI), C.night, SQ ? 'center' : 'left');
+    const wy = SQ ? cy0 + size / 2 + 190 : cy0 + size * 0.3;
+    if (kw > 0) {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, wy + 40); ctx.clip();
+      text(ctx, 'Keyhole', wx, wy + (1 - kw) * 200, font(FORMAT.pick({ '16x9': 190, '1x1': 150 }), 600, DISPLAY), C.white, SQ ? 'center' : 'left', -3);
+      ctx.restore();
+    }
+    const tg = E.outQuint(prog(t, tKey + 0.6, tKey + 1.4));
+    if (tg > 0) {
+      ctx.globalAlpha = fade * tg;
+      text(ctx, 'Trade in private. Sell the view.', SQ ? W / 2 : wx + 8, wy + 100 + (1 - tg) * 20, font(FORMAT.pick({ '16x9': 52, '1x1': 44 }), 500, UI), C.night, SQ ? 'center' : 'left');
     }
     ctx.restore();
   }
-  // final beat: the window is the whole frame
-  if (z >= 0.999 && IMG.home) M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 });
+  if (z >= 0.999) M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 });
 }
 
-const RET_REL = [46, 173, 232, 102];
-function s4Records(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  // the home screen we came through, drifting and dimming as the card lifts out
-  const dim = E.outCubic(prog(u, 17.4, 18.6));
-  const push = 1 + 0.06 * prog(u, 16, 24);
-  ctx.save();
-  M.zoomAbout(ctx, push, W / 2, H * 0.4);
-  M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 });
-  ctx.restore();
-  if (dim > 0) { ctx.fillStyle = `rgba(245,246,248,${0.95 * dim})`; ctx.fillRect(0, 0, W, H); }
-  const k = springU(u, 17.8, SPRING.bouncy);
-  const out = E.inCubic(prog(u, 23.5, 24));
-  if (k > 0) {
-    const w = FORMAT.pick({ '16x9': 700, '1x1': 620 });
-    const h = w * (644 / 774);
-    const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2;
-    const y = SQ ? 400 : (H - h) / 2;
-    const sc = lerp(0.7, 1, k);
-    ctx.save();
-    ctx.translate(x + w / 2, y + h / 2 + out * -40); ctx.scale(sc, sc); ctx.translate(-(x + w / 2), -(y + h / 2));
-    ctx.globalAlpha = clamp(k * 1.4) * (1 - out);
-    card(ctx, IMG.card, null, x, y, w, h, { r: 30 });
-    const s = w / 774;
-    const pk = Math.max(bump(u, 20, 0.9), bump(u, 22, 0.9));
-    ringAt(ctx, x + RET_REL[0] * s, y + RET_REL[1] * s, RET_REL[2] * s, RET_REL[3] * s, pk, 14);
+function s4(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const fall = E.inCubic(prog(u, 24, 25));
+  if (fall < 1) { ctx.save(); ctx.globalAlpha = 1 - fall; M.zoomAbout(ctx, 1 + fall * 0.3, W / 2, H / 2); M.cover(ctx, IMG.home, 0, 0, W, H, { fx: SQ ? 0.12 : 0.5, fy: 0.3 }); ctx.restore(); }
+  const gw = L.sw, sc = gw / GRID[2], gh = GRID[3] * sc;
+  const { x: gx, y: gy } = box(gw, gh);
+  const lift = springU(u, 30, SPRING.gentle);
+  const out = leave(u, 35.5, 0.5);
+  CARDS.forEach((c, i) => {
+    if (i === 2) return;
+    const k = enter(u, 24.1 + i * 0.4, SPRING.bouncy);
+    const x = gx + (c[0] - GRID[0]) * sc, y = gy + (c[1] - GRID[1]) * sc;
+    piece(ctx, IMG.homeFull, c, x, y + (1 - k) * 260 - out * 60, c[2] * sc, c[3] * sc, { r: 14, alpha: clamp(k * 1.4) * (1 - 0.65 * clamp(lift)) * (1 - out), rot: (1 - k) * (i % 2 ? 0.12 : -0.12), shadow: 0.7 });
+  });
+  const c = CARDS[2];
+  const k = enter(u, 24.9, SPRING.bouncy);
+  const bx = gx + (c[0] - GRID[0]) * sc, by = gy + (c[1] - GRID[1]) * sc, bw = c[2] * sc, bh = c[3] * sc;
+  const big = SQ ? 2.1 : 2.2;
+  const tw = bw * lerp(1, big, lift), th = bh * lerp(1, big, lift);
+  const cx = lerp(bx + bw / 2, L.sx + L.sw / 2, lift), cy = lerp(by + bh / 2, L.sy + L.sh / 2 - (SQ ? 0 : 20), lift);
+  const x = cx - tw / 2, y = cy - th / 2 + (1 - k) * 260 - out * 60;
+  piece(ctx, IMG.homeFull, c, x, y, tw, th, { r: 14 * lerp(1, big, lift), alpha: clamp(k * 1.4) * (1 - out), shadow: 1 + lift });
+  const cnt = prog(u, 30.5, 33);
+  if (cnt > 0 && out < 1) {
+    const s = tw / c[2];
+    const rx = x + RET[0] * s, ry = y + RET[1] * s, rw = RET[2] * s, rh = RET[3] * s;
+    ctx.save(); ctx.globalAlpha = 1 - out;
+    ctx.fillStyle = C.white; ctx.fillRect(rx - 4, ry - 2, rw + 30 * s, rh + 4);
+    counter(ctx, 37.4, cnt, rx, ry + rh * 0.84, font(68 * s, 600, DISPLAY), C.green, { sign: true, suffix: '%' });
     ctx.restore();
   }
-  caption(ctx, u, 'Every record is\nread straight\nfrom NEAR.', null, 18.6, 23.5, { accent: { 'NEAR.': C.violet } });
+  const tg = enter(u, 33.4, SPRING.bouncy);
+  if (tg > 0 && out < 1) {
+    const px = x + tw - 160, py = y + th + 50;
+    ctx.save(); ctx.globalAlpha = 1 - out;
+    ctx.strokeStyle = C.violet; ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
+    ctx.beginPath(); ctx.moveTo(px, y + th - 10); ctx.lineTo(px, lerp(y + th - 10, py - 30, clamp(tg))); ctx.stroke(); ctx.setLineDash([]);
+    ctx.translate(px, py); ctx.scale(tg, tg);
+    rrect(ctx, -150, -30, 300, 60, 30); ctx.fillStyle = C.violet; ctx.fill();
+    text(ctx, 'Read from NEAR', 0, 11, font(30, 600, UI), C.white, 'center');
+    ctx.restore();
+  }
+  words(ctx, t);
 }
 
-const MAIN_SRC = [240, 194, 1711, 1150];
-function s5Proof(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 23.4, SPRING.snappy);
-  const out = E.inCubic(prog(u, 31.5, 32));
-  const w = FORMAT.pick({ '16x9': 990, '1x1': 900 });
-  const h = w * (MAIN_SRC[3] / MAIN_SRC[2]);
-  const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2;
-  const y = SQ ? 360 : (H - h) / 2;
-  const yy = lerp(y + 120, y, k) - out * 50;
+function s5(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const k = enter(u, 35.6);
+  const out = leave(u, 45.5);
+  const w = L.sw, h = w * (MAIN[3] / MAIN[2]);
+  const { x, y: y0 } = box(w, h);
+  const y = y0 + (1 - k) * 140 - out * 60 - (SQ ? 0 : 40);
   const a = clamp(k * 1.5) * (1 - out);
-  card(ctx, IMG.trader, MAIN_SRC, x, yy, w, h, { r: 26, alpha: a });
-  const s = w / MAIN_SRC[2];
-  // the chart draws itself: a canvas-coloured cover slides off left → right
-  const rev = E.inOutCubic(prog(u, 24.4, 28));
-  const cx = x + (298 - 240) * s, cy = yy + (646 - 194) * s, cw = 1595 * s, ch = 440 * s;
-  if (rev < 1 && a > 0) {
-    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.white;
-    ctx.fillRect(cx + cw * rev, cy - 4, cw * (1 - rev) + 2, ch + 8);
-    ctx.restore();
-  }
-  // the four stats pop in one by one
-  const sx0 = x + (298 - 240) * s, sy0 = yy + (1134 - 194) * s, chipW = 380.75 * s, chipH = 152 * s, gap = 24 * s;
+  piece(ctx, IMG.trader, MAIN, x, y, w, h, { r: 24, alpha: a });
+  const s = w / MAIN[2];
+  const rev = E.inOutCubic(prog(u, 36.4, 39.6));
   if (a > 0) {
     ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.white;
-    ctx.fillRect(sx0 - 4, sy0 - 4, 1595 * s + 8, chipH + 8);
+    const cx = x + (CHART[0] - MAIN[0]) * s, cy = y + (CHART[1] - MAIN[1]) * s;
+    if (rev < 1) ctx.fillRect(cx + CHART[2] * s * rev, cy - 4, CHART[2] * s * (1 - rev) + 2, CHART[3] * s + 8);
+    const sx0 = x + (STATS[0] - MAIN[0]) * s, sy0 = y + (STATS[1] - MAIN[1]) * s, cw = 380.75 * s, chh = STATS[3] * s, gap = 24 * s;
+    ctx.fillRect(sx0 - 4, sy0 - 4, STATS[2] * s + 8, chh + 8);
     for (let i = 0; i < 4; i++) {
-      const pk = springU(u, 28 + i * 0.75, SPRING.bouncy);
+      const pk = enter(u, 40 + i * 0.6, SPRING.bouncy);
       if (pk <= 0) continue;
-      const px = sx0 + i * (chipW + gap);
-      ctx.save();
-      ctx.translate(px + chipW / 2, sy0 + chipH / 2); ctx.scale(pk, pk); ctx.translate(-(px + chipW / 2), -(sy0 + chipH / 2));
-      ctx.drawImage(IMG.trader, 298 + i * (380.75 + 24), 1134, 380.75, 152, px, sy0, chipW, chipH);
+      const px = sx0 + i * (cw + gap);
+      ctx.save(); ctx.translate(px + cw / 2, sy0 + chh / 2); ctx.scale(pk, pk); ctx.translate(-(px + cw / 2), -(sy0 + chh / 2));
+      ctx.drawImage(IMG.trader, STATS[0] + i * (380.75 + 24), STATS[1], 380.75, STATS[3], px, sy0, cw, chh);
       ctx.restore();
     }
     ctx.restore();
   }
-  caption(ctx, u, "Can't be edited.\nCan't hide losses.", null, 24.8, 31.5);
-}
-
-// The real locked trades card; the crop window closes in on the lock (log-space dolly).
-const LOCK_FULL = [520, 1384, 1150, 416], LOCK_TIGHT = [880, 1470, 432, 250];
-function s6Private(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 31.4, SPRING.snappy);
-  const out = E.inCubic(prog(u, 39.5, 40));
-  const z = E.inOutSine(prog(u, 32.5, 39.5));
-  const r = (a, b) => a * (b / a) ** z; // log-space size
-  const sw = r(LOCK_FULL[2], LOCK_TIGHT[2]);
-  const sh = sw / (LOCK_FULL[2] / LOCK_FULL[3]) * (1 + 0.6 * z);
-  const lockCx = 1096, lockCy = 1607;
-  const cxs = lerp(LOCK_FULL[0] + LOCK_FULL[2] / 2, lockCx, z), cys = lerp(LOCK_FULL[1] + LOCK_FULL[3] / 2, lockCy - 20, z);
-  const src = [cxs - sw / 2, Math.max(1384, cys - sh / 2), sw, Math.min(sh, 1800 - Math.max(1384, cys - sh / 2))];
-  const w = FORMAT.pick({ '16x9': 990, '1x1': 920 });
-  const h = w * (src[3] / src[2]);
-  const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2;
-  const y = (SQ ? 380 + (680 - h) / 2 : (H - h) / 2) + (1 - k) * 100 - out * 40;
-  card(ctx, IMG.locked, src, x, y, w, h, { r: 26, alpha: clamp(k * 1.5) * (1 - out) });
-  caption(ctx, u, 'Trades stay\nprivate.', 'Only people holding a key see them.', 32.2, 39.5, { accent: { 'private.': C.violet } });
-}
-
-function s7Buy(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const kc = springU(u, 39.3, SPRING.snappy);
-  const kd = springU(u, SQ ? 39.4 : 42.8, SPRING.bouncy);
-  const out = E.inCubic(prog(u, 47.5, 48));
-  if (!SQ) {
-    const w = 400, h = w * (740 / 642);
-    const x = lerp(W + 60, 1430, kc), y = 300;
-    card(ctx, IMG.keycard, null, x, y - out * 40, w, h, { r: 22, alpha: 1 - out });
+  const lk = enter(u, 42.8, SPRING.bouncy);
+  if (lk > 0) {
+    const lw = SQ ? 420 : 440, lh = lw * (641 / 773);
+    const lx = SQ ? x + w - lw + 20 : x + w - lw + 60, ly = y + h - lh * 0.55;
+    const xx = lerp(W + 40, lx, lk), rot = lerp(0.2, 0.04, lk);
+    piece(ctx, IMG.homeFull, CARDS[5], xx, ly, lw, lh, { r: 18, rot, alpha: 1 - out, shadow: 1.6 });
+    const sc2 = lw / 773, pulse = Math.max(bump(u, 44, 0.8), bump(u, 45, 0.6));
+    if (pulse > 0) {
+      ctx.save(); ctx.globalAlpha = pulse * (1 - out); ctx.strokeStyle = C.red; ctx.lineWidth = 5;
+      ctx.translate(xx + lw / 2, ly + lh / 2); ctx.rotate(rot); ctx.translate(-(xx + lw / 2), -(ly + lh / 2));
+      rrect(ctx, xx + RET[0] * sc2 - 10, ly + RET[1] * sc2 - 10, RET[2] * sc2 + 20, RET[3] * sc2 + 20, 16); ctx.stroke();
+      ctx.restore();
+    }
   }
-  const dw = FORMAT.pick({ '16x9': 520, '1x1': 470 }), dh = dw * (1280 / 920);
-  const dx = SQ ? (W - dw) / 2 + 150 : 880, dy = SQ ? 330 : (H - dh) / 2;
-  if (kd > 0) {
-    ctx.save();
-    ctx.translate(dx + dw / 2, dy + dh / 2); const sc = lerp(0.85, 1, kd); ctx.scale(sc, sc); ctx.translate(-(dx + dw / 2), -(dy + dh / 2));
-    card(ctx, IMG.buy, null, dx, dy + (1 - kd) * 120 - out * 40, dw, dh, { r: 30, alpha: clamp(kd * 1.5) * (1 - out) });
-    // tap on Pay
-    const tap = bump(u, 46.6, 0.7);
-    if (tap > 0) {
-      ctx.globalAlpha = tap * 0.5; ctx.fillStyle = C.white;
-      ctx.beginPath(); ctx.arc(dx + dw * 0.5, dy + dh * 0.835, 30 + (1 - tap) * 40, 0, M.TAU); ctx.fill();
+  words(ctx, t);
+}
+
+function s6(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const k = enter(u, 45.6);
+  const out = leave(u, 55.5);
+  const w = L.sw, h = w * (LOCKED[3] / LOCKED[2]);
+  const { x, y: y0 } = box(w, h);
+  const y = y0 + (1 - k) * 120 - out * 60;
+  piece(ctx, IMG.locked, LOCKED, x, y, w, h, { r: 24, alpha: clamp(k * 1.5) * (1 - out) });
+  const s = w / LOCKED[2];
+  const lx = x + (LOCK_AT[0] - LOCKED[0]) * s, ly = y + (LOCK_AT[1] - LOCKED[1]) * s;
+  const tKey = wordT(5, 'key');
+  const grow = enter(u, 47, SPRING.bouncy);
+  const keyK = E.inOutCubic(prog(t, tKey - 0.1, tKey + 0.5));
+  if (grow > 0 && out < 1) {
+    ctx.save(); ctx.globalAlpha = 1 - out;
+    lockIcon(ctx, lx, ly - 10 * s, (60 + 40 * keyK) * grow, { shut: E.outCubic(prog(u, 47.4, 48)), key: keyK, bg: keyK > 0.5 ? C.violet : C.ink });
+    ctx.restore();
+  }
+  words(ctx, t);
+}
+
+function s7(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const out = leave(u, 65.5);
+  const kc = enter(u, 55.6, SPRING.bouncy);
+  const kw = SQ ? 300 : 430, kh = kw * (740 / 642);
+  const kx = L.sx + L.sw - kw - 10, ky = SQ ? 440 : (H - kh) / 2;
+  const dialogK = enter(u, 59.8, SPRING.bouncy);
+  piece(ctx, IMG.keycard, null, lerp(W + 50, kx, kc), ky - out * 50, kw, kh, { r: 22, alpha: 1 - out, bg: C.ink });
+  const coins = ['NEAR', 'BTC', 'ETH', 'SOL', 'USDC', 'ZEC', 'USDT'];
+  coins.forEach((c, i) => {
+    const t0 = 56.6 + i * 0.25;
+    const p = prog(u, t0, t0 + 2.6);
+    if (p <= 0 || p >= 1) return;
+    const ang = i * (M.TAU / coins.length) + p * 4;
+    const r = lerp(330, 0, E.inCubic(p));
+    const cx = kx + kw / 2 + Math.cos(ang) * r, cy = ky + kh / 2 + Math.sin(ang) * r * 0.6;
+    const sz = 84 * (1 - E.inExpo(p) * 0.9) * clamp(p * 6);
+    ctx.drawImage(IMG['c' + c], cx - sz / 2, cy - sz / 2, sz, sz);
+  });
+  const dw = SQ ? 420 : 560, dh = dw * (1280 / 920);
+  const dx = SQ ? L.sx + 30 : L.sx - 10, dy = SQ ? 400 : (H - dh) / 2;
+  if (dialogK > 0) {
+    const yy = dy + (1 - dialogK) * 160 - out * 50;
+    piece(ctx, IMG.buy, null, dx, yy, dw, dh, { r: 26, alpha: clamp(dialogK * 1.5) * (1 - out), scale: lerp(0.85, 1, dialogK), shadow: 1.4 });
+    const ds = dw / 920;
+    const payX = dx + (BUY_PAY[0] + BUY_PAY[2] / 2) * ds, payY = yy + (BUY_PAY[1] + BUY_PAY[3] / 2) * ds;
+    cursorPath(ctx, u, [[60.5, payX + 260, payY + 120], [62.2, payX + 10, payY + 6]], [62.5], { show: [60.5, 65] });
+    const fly = E.outCubic(prog(u, 63.2, 64.6));
+    chipText(ctx, '+23.75 USDC to Mara', lerp(payX, kx + kw / 2, fly), lerp(payY - 50, ky - 40, fly), enter(u, 63.1, SPRING.bouncy) * (1 - out));
+  }
+  words(ctx, t);
+}
+
+function feedGeom() {
+  const w = SQ ? 900 : 920, s = w / 1712;
+  const rows = SQ ? 6 : 8;
+  const h = (FEED_HEAD + rows * FEED_ROW) * s;
+  const { x, y } = box(w, h);
+  return { w, s, rows, h, x, y, bx: x + (COPY_BTN[0] + COPY_BTN[2] / 2) * s, by: y + (COPY_BTN[1] + COPY_BTN[3] / 2) * s };
+}
+
+function s8(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const img = IMG.feed;
+  const { w, s, rows, h, x, y, bx, by } = feedGeom();
+  const push = E.inOutCubic(prog(u, 74.5, 76));
+  ctx.save();
+  ctx.translate(lerp(0, W / 2 - bx, push), lerp(0, H / 2 - by, push));
+  M.zoomAbout(ctx, 1 + push * 0.9, bx, by);
+  const fk = enter(u, 65.7);
+  const fy = y + (1 - fk) * 80;
+  ctx.save(); ctx.globalAlpha = clamp(fk * 1.5);
+  ctx.shadowColor = 'rgba(13,17,23,0.16)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 24;
+  rrect(ctx, x, fy, w, h, 22); ctx.fillStyle = C.white; ctx.fill(); ctx.restore();
+  ctx.save(); rrect(ctx, x, fy, w, h, 22); ctx.clip();
+  ctx.globalAlpha = clamp(fk * 1.5);
+  ctx.drawImage(img, 0, 0, img.width, FEED_HEAD, x, fy, w, FEED_HEAD * s);
+  for (let i = 0; i < rows; i++) {
+    const k = enter(u, 66.3 + i * 0.5, SPRING.snappy);
+    if (k <= 0) continue;
+    ctx.save(); ctx.globalAlpha = clamp(k * 1.4);
+    ctx.drawImage(img, 0, FEED_HEAD + i * FEED_ROW, img.width, FEED_ROW, x + (1 - k) * 300, fy + (FEED_HEAD + i * FEED_ROW) * s, w, FEED_ROW * s);
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.restore();
+  if (push < 0.4) words(ctx, t);
+}
+
+function s9(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const img = IMG.feed;
+  const { w, rows, h, x, y, bx, by } = feedGeom();
+  const dk = enter(u, 77.1, SPRING.bouncy);
+  const back = E.inOutCubic(prog(u, 77, 78));
+  ctx.save();
+  ctx.translate((1 - back) * (W / 2 - bx), (1 - back) * (H / 2 - by));
+  M.zoomAbout(ctx, 1 + (1 - back) * 0.9, bx, by);
+  ctx.globalAlpha = 1 - 0.8 * back;
+  piece(ctx, img, [0, 0, img.width, FEED_HEAD + rows * FEED_ROW], x, y, w, h, { r: 22, shadow: 0.5 });
+  ctx.restore();
+  if (u < 77.4) cursorPath(ctx, u, [[75.8, W / 2 + 200, H / 2 + 160], [76.4, W / 2 + 6, H / 2 + 4]], [76.5], { show: [75.8, 77.4] });
+  const done = u >= 82.6;
+  const dw = SQ ? 470 : 540, dh = dw * (1240 / 920);
+  const dx = SQ ? (W - dw) / 2 : L.sx + (L.sw - dw) / 2, dy = SQ ? 360 : (H - dh) / 2;
+  const out = leave(u, 85.5);
+  if (!done && dk > 0) {
+    piece(ctx, IMG.copy, null, dx, dy + (1 - dk) * 140, dw, dh, { r: 28, scale: lerp(0.6, 1, dk), alpha: clamp(dk * 1.6), shadow: 1.5 });
+    const ds = dw / 920;
+    const sameX = dx + (CP_SAME[0] + CP_SAME[2] / 2) * ds, sameY = dy + (CP_SAME[1] + CP_SAME[3] / 2) * ds;
+    const goX = dx + (CP_GO[0] + CP_GO[2] / 2) * ds, goY = dy + (CP_GO[1] + CP_GO[3] / 2) * ds;
+    cursorPath(ctx, u, [[78, dx + dw + 120, dy + dh * 0.2], [79.6, sameX, sameY], [81.4, goX + 40, goY]], [80, 82], { show: [78, 82.6] });
+  } else if (done) {
+    const kc = enter(u, 82.5, SPRING.bouncy);
+    const cw = SQ ? 560 : 600, ch = cw * (692 / 920);
+    const cx = SQ ? (W - cw) / 2 : L.sx + (L.sw - cw) / 2, cy = SQ ? 440 : (H - ch) / 2;
+    ctx.save(); shake(ctx, u, 82.6, 6, 4, 0.2);
+    piece(ctx, IMG.copied, null, cx, cy - out * 50, cw, ch, { r: 30, scale: lerp(0.7, 1, kc), alpha: 1 - out, shadow: 1.5 });
+    const rk = prog(u, 82.7, 84.2);
+    if (rk > 0 && rk < 1) {
+      ctx.globalAlpha = (1 - rk) * 0.7; ctx.strokeStyle = C.green; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(cx + cw / 2, cy + ch * 0.17, 40 + rk * 160, 0, M.TAU); ctx.stroke();
     }
     ctx.restore();
   }
-  caption(ctx, u, 'Buy a key.', 'The trader is paid instantly.', 40.6, 47.5, SQ ? { size: 64 } : {});
+  words(ctx, t);
 }
 
-function s8In(ctx, u, IMG) {
-  fill(ctx, C.violet);
-  ctx.save();
-  shake(ctx, u, 48, 10, 5, 0.25);
-  const k = springU(u, 47.9, SPRING.bouncy);
-  const whip = E.inCubic(prog(u, 51.5, 52));
-  const w = FORMAT.pick({ '16x9': 820, '1x1': 760 }), h = w * (632 / 920);
-  const x = (W - w) / 2 - whip * (W + w), y = (H - h) / 2;
-  ctx.translate(x + w / 2, y + h / 2); ctx.scale(lerp(0.6, 1, k), lerp(0.6, 1, k)); ctx.translate(-(x + w / 2), -(y + h / 2));
-  card(ctx, IMG.yourein, null, x, y, w, h, { r: 34, shadow: 1.6, alpha: clamp(k * 2) });
-  ctx.restore();
-}
-
-function s9Feed(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const kin = E.outCubic(prog(u, 51.6, 52.4));
-  const out = E.inCubic(prog(u, 61.5, 62));
-  const w = FORMAT.pick({ '16x9': 900, '1x1': 860 });
-  const h = FORMAT.pick({ '16x9': 960, '1x1': 700 });
-  const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2 + (1 - kin) * W * 0.5;
-  const y = SQ ? 330 : (H - h) / 2;
-  const img = IMG.feed;
-  const srcH = img.width * (h / w);
-  const scroll = E.inOutSine(prog(u, 52.5, 61.5)) * 2400;
-  card(ctx, img, [0, scroll, img.width, srcH], x, y - out * 40, w, h, { r: 26, alpha: 1 - out });
-  caption(ctx, u, 'See every\ntrade.', 'What, how much, and how it did since.', 53, 61.5, SQ ? { size: 64 } : {});
-}
-
-function s10Copy(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 61.4, SPRING.snappy);
-  const done = u >= 68;
-  const out = E.inCubic(prog(u, 71.5, 72));
-  const dw = FORMAT.pick({ '16x9': 560, '1x1': 480 }), dh = dw * (1240 / 920);
-  const dx = SQ ? (W - dw) / 2 + 160 : 1000, dy = SQ ? 320 : (H - dh) / 2;
-  if (!done) {
-    card(ctx, IMG.copy, null, dx, lerp(H + 40, dy, k), dw, dh, { r: 30 });
-    const pk = bump(u, 66, 1.2);
-    ringAt(ctx, dx + dw * 0.357, lerp(H + 40, dy, k) + dh * 0.339, dw * 0.285, dh * 0.111, pk, 14);
-  } else {
-    const kc = springU(u, 67.95, SPRING.bouncy);
-    const cw = FORMAT.pick({ '16x9': 600, '1x1': 520 }), ch = cw * (692 / 920);
-    const cx = SQ ? (W - cw) / 2 + 160 : 980, cy = SQ ? 420 : (H - ch) / 2;
-    ctx.save();
-    ctx.translate(cx + cw / 2, cy + ch / 2); ctx.scale(lerp(0.7, 1, kc), lerp(0.7, 1, kc)); ctx.translate(-(cx + cw / 2), -(cy + ch / 2));
-    card(ctx, IMG.copied, null, cx, cy - out * 40, cw, ch, { r: 30, alpha: 1 - out });
+function s10(ctx, u, t, IMG) {
+  backdrop(ctx, t);
+  const k = enter(u, 85.6);
+  const toPhones = E.inOutCubic(prog(u, 92.6, 93.8));
+  const w = L.sw, h = w * (SELL[3] / SELL[2]);
+  const { x: x0, y: y0 } = box(w, h);
+  const x = x0 - toPhones * (W * 0.9), y = y0 + (1 - k) * 140 - (SQ ? 0 : 30);
+  const a = clamp(k * 1.5) * (1 - toPhones);
+  if (a > 0) {
+    piece(ctx, IMG.sell, SELL, x, y, w, h, { r: 22, alpha: a });
+    const s = w / SELL[2];
+    const g = E.outCubic(prog(u, 86.6, 90));
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.white;
+    if (g < 1) ctx.fillRect(x + 40 * s, y + (873 - 537 + 110) * s, 1631 * s, 340 * s * (1 - g));
+    const ex = x + EARNED[0] * s, ey = y + EARNED[1] * s, ew = EARNED[2] * s, eh = EARNED[3] * s;
+    ctx.fillStyle = C.ink; ctx.fillRect(ex - 4, ey - 2, ew + 8, eh + 4);
+    counter(ctx, 3522, prog(u, 86.6, 89.5), ex, ey + eh * 0.82, font(68 * s, 600, DISPLAY), C.white, { digits: 0, suffix: ' USDC' });
     ctx.restore();
   }
-  caption(ctx, u, 'Copy in\none tap.', 'Live price from NEAR Intents.', 62.6, 71.5, SQ ? { size: 64 } : {});
-}
-
-const SELL_SRC = [240, 537, 1711, 836];
-function s11Earn(ctx, u, IMG) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 71.4, SPRING.snappy);
-  const out = E.inCubic(prog(u, 79.5, 80));
-  const w = FORMAT.pick({ '16x9': 1000, '1x1': 920 }), h = w * (SELL_SRC[3] / SELL_SRC[2]);
-  const x = SQ ? (W - w) / 2 : LAY.sx + (LAY.sw - w) / 2, y = SQ ? 430 : (H - h) / 2;
-  const yy = lerp(y + 140, y, k) - out * 40;
-  const a = clamp(k * 1.4) * (1 - out);
-  card(ctx, IMG.sell, SELL_SRC, x, yy, w, h, { r: 26, alpha: a });
-  // bars grow: a white cover over the chart's bar area slides down
-  const s = w / SELL_SRC[2];
-  const bx = x + 40 * s, by = yy + (873 - 537 + 110) * s, bw = 1631 * s, bh = 340 * s;
-  const g = E.outCubic(prog(u, 72.6, 77));
-  if (g < 1 && a > 0) {
-    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = C.white; ctx.fillRect(bx, by, bw, bh * (1 - g)); ctx.restore();
+  if (toPhones > 0) {
+    const pw = SQ ? 270 : 300, ph = pw / 0.462;
+    const k1 = enter(u, 92.9, SPRING.gentle), k2 = enter(u, 93.4, SPRING.gentle);
+    const out = leave(u, 99.4, 0.6);
+    const cx = L.sx + L.sw / 2;
+    const py = SQ ? 410 : (H - ph) / 2;
+    phone(ctx, IMG.m1, lerp(W + 100, cx - pw - 30, k1) - out * W, py + 20, pw, lerp(0.2, -0.04, k1));
+    phone(ctx, IMG.m2, lerp(W + 400, cx + 30, k2) + out * W, py - 20, pw, lerp(0.25, 0.04, k2));
   }
-  caption(ctx, u, 'Get paid for\nbeing right.', 'Traders keep 95% of every key.', 72.8, 79.5, SQ ? { size: 64 } : {});
+  words(ctx, t, { size: SQ ? 52 : 68 });
 }
 
-function s12Phones(ctx, u, IMG) {
-  fill(ctx, C.ink);
-  const k1 = springU(u, 79.4, SPRING.snappy), k2 = springU(u, 79.8, SPRING.snappy);
-  const out = E.inCubic(prog(u, 83.4, 84));
-  const pw = FORMAT.pick({ '16x9': 330, '1x1': 300 }), ph = pw / 0.462;
-  const y = (H - ph) / 2 + (SQ ? 0 : 0);
-  const gap = 60;
-  const x1 = W / 2 - pw - gap / 2 - out * W * 0.6, x2 = W / 2 + gap / 2 + out * W * 0.6;
-  phone(ctx, IMG.m1, lerp(-pw - 100, x1, k1), y + 20, pw, lerp(-0.12, -0.03, k1));
-  phone(ctx, IMG.m2, lerp(W + 100, x2, k2), y - 20, pw, lerp(0.12, 0.03, k2));
-}
-
-function s13End(ctx, u) {
-  fill(ctx, C.canvas);
-  const k = springU(u, 83.5, SPRING.bouncy);
+function s11(ctx, u, t) {
+  backdrop(ctx, t);
+  const k = enter(u, 99.6, SPRING.bouncy);
   const size = FORMAT.pick({ '16x9': 200, '1x1': 170 });
-  const x = SQ ? 110 : 260, cy = SQ ? 330 : H / 2 - 90;
+  const x = SQ ? 110 : 250, cy = SQ ? 330 : H / 2 - 100;
   if (k > 0) {
-    ctx.save();
-    ctx.translate(x + size / 2, cy); ctx.scale(k, k); ctx.rotate((1 - k) * -0.3); ctx.translate(-(x + size / 2), -cy);
-    logo(ctx, x + size / 2, cy, size);
+    ctx.save(); ctx.translate(x + size / 2, cy); ctx.scale(k, k); ctx.rotate((1 - k) * -0.4); ctx.translate(-(x + size / 2), -cy);
+    logo(ctx, x + size / 2, cy, size); ctx.restore();
+  }
+  const last = VO.lines[VO.lines.length - 1];
+  const kw = M.spring(t - last.t0 + 0.05, SPRING.snappy);
+  if (kw > 0) {
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, cy + size * 0.3 + 40); ctx.clip();
+    text(ctx, 'Keyhole', x + size + 50, cy + size * 0.27 + (1 - kw) * 200, font(FORMAT.pick({ '16x9': 170, '1x1': 140 }), 600, DISPLAY), C.ink, 'left', -3);
     ctx.restore();
   }
-  words(ctx, u, [[['Keyhole']]], { x: x + size + 50, y: cy + size * 0.27, size: FORMAT.pick({ '16x9': 170, '1x1': 140 }), u0: 84.2 });
-  const t1 = E.outQuint(prog(u, 85.3, 86.3));
-  const ty = SQ ? cy + size / 2 + 140 : cy + size / 2 + 120;
-  if (t1 > 0) {
-    ctx.save(); ctx.globalAlpha = t1;
-    text(ctx, 'Trade in private. Sell the view.', x, ty + (1 - t1) * 20, font(FORMAT.pick({ '16x9': 64, '1x1': 54 }), 600, DISPLAY), C.ink);
-    ctx.restore();
-  }
-  const t2 = E.outQuint(prog(u, 86.2, 87.2));
+  const tail = { ...last, words: last.words.slice(1) };
+  kinetic(ctx, t, tail, 999, { x, y: cy + size / 2 + 130, w: SQ ? 940 : 1400, size: FORMAT.pick({ '16x9': 70, '1x1': 56 }), accent: { private: C.violet, view: C.violet } });
+  const t2 = E.outQuint(prog(u, 106, 107.2));
   if (t2 > 0) {
     ctx.save(); ctx.globalAlpha = t2;
-    text(ctx, 'keyhole-near.vercel.app', x, ty + 90 + (1 - t2) * 16, font(FORMAT.pick({ '16x9': 44, '1x1': 38 }), 600, UI), C.violet);
-    text(ctx, 'Built on NEAR Intents · NEAR HACKATHON 2026', x, ty + 150 + (1 - t2) * 16, font(FORMAT.pick({ '16x9': 30, '1x1': 26 }), 500, UI), C.muted);
+    const by = cy + size / 2 + 230;
+    text(ctx, 'keyhole-near.vercel.app', x, by + (1 - t2) * 16, font(FORMAT.pick({ '16x9': 44, '1x1': 38 }), 600, UI), C.violet);
+    text(ctx, 'Built on NEAR Intents · NEAR HACKATHON 2026', x, by + 60 + (1 - t2) * 16, font(FORMAT.pick({ '16x9': 30, '1x1': 26 }), 500, UI), C.muted);
     ctx.restore();
   }
 }
@@ -476,33 +464,34 @@ M.film({
   fonts: [font(100, 600, DISPLAY), font(40, 500, UI), font(40, 600, UI)],
   images: {
     home: 'assets/shots/d01_home.png',
-    card: 'assets/shots/d01_card_mara.png',
+    homeFull: 'assets/shots/d01_home_full.png',
     trader: 'assets/shots/d02_trader.png',
     locked: 'assets/shots/d02_trader_locked.png',
     keycard: 'assets/shots/d02_keycard.png',
     buy: 'assets/shots/d03_buy_dialog.png',
-    yourein: 'assets/shots/d04_youre_in_dialog.png',
     feed: 'assets/shots/d05_feed.png',
     copy: 'assets/shots/d06_copy_dialog.png',
     copied: 'assets/shots/d07_copied_dialog.png',
     sell: 'assets/shots/d10_sell.png',
     m1: 'assets/shots/m02_trader.png',
     m2: 'assets/shots/m05_trades.png',
+    cNEAR: 'assets/coins/NEAR.svg', cBTC: 'assets/coins/BTC.svg', cETH: 'assets/coins/ETH.svg', cSOL: 'assets/coins/SOL.svg',
+    cUSDC: 'assets/coins/USDC.svg', cZEC: 'assets/coins/ZEC.svg', cUSDT: 'assets/coins/USDT.svg',
   },
   hits: HITS,
+  samples: 10,
+  async init() { VO = await fetch('vo.json').then((r) => r.json()); },
   draw(ctx, u, t, IMG) {
-    if (u < 4) s1Hook(ctx, u);
-    else if (u < 8) s2Question(ctx, u, IMG);
-    else if (u < 16) s3Reveal(ctx, u, IMG);
-    else if (u < 24) s4Records(ctx, u, IMG);
-    else if (u < 32) s5Proof(ctx, u, IMG);
-    else if (u < 40) s6Private(ctx, u, IMG);
-    else if (u < 48) s7Buy(ctx, u, IMG);
-    else if (u < 52) s8In(ctx, u, IMG);
-    else if (u < 62) s9Feed(ctx, u, IMG);
-    else if (u < 72) s10Copy(ctx, u, IMG);
-    else if (u < 80) s11Earn(ctx, u, IMG);
-    else if (u < 84) s12Phones(ctx, u, IMG);
-    else s13End(ctx, u);
+    if (u < 8) s1(ctx, u, t);
+    else if (u < 16) s2(ctx, u, t, IMG);
+    else if (u < 24) s3(ctx, u, t, IMG);
+    else if (u < 36) s4(ctx, u, t, IMG);
+    else if (u < 46) s5(ctx, u, t, IMG);
+    else if (u < 56) s6(ctx, u, t, IMG);
+    else if (u < 66) s7(ctx, u, t, IMG);
+    else if (u < 76) s8(ctx, u, t, IMG);
+    else if (u < 86) s9(ctx, u, t, IMG);
+    else if (u < 100) s10(ctx, u, t, IMG);
+    else s11(ctx, u, t);
   },
 });
