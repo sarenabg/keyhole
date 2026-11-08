@@ -6,7 +6,7 @@ Keyhole is copy trading for traders who keep their trades private on NEAR. A tra
 
 Built at the NEAR HACKATHON (November 2026). Tracks: **Privacy & Private AI** (`privacy`) and **Unstoppable DeFi** (`defi`).
 
-- Hosted app: _[added after deploy]_
+- Hosted app: **https://keyhole-near.vercel.app** (Demo mode needs nothing; switch to Live in the header)
 - Demo video: _[added after recording]_
 
 ## The problem
